@@ -1,0 +1,21 @@
+# Taken and modified from https://github.com/biocore/burrito
+# this file is based on the examples provided in scikit-bio's .coveragerc
+
+[run]
+omit =
+    */tests*
+    */__init__.py
+source = metoo
+branch = True
+include = */metoo/*
+
+[report]
+exclude_lines =
+    pragma: no cover
+    def __repr__
+    raise NotImplementedError
+    if __name__ == .__main__.:
+omit =
+    */tests*
+    */__init__.py
+
