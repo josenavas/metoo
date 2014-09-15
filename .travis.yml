@@ -1,0 +1,15 @@
+# Taken and modified from https://github.com/biocore/burrito
+# Check on http://lint.travis-ci.org/ after modifying it!
+language: python
+python:
+  - "2.7"
+  - "3.3"
+  - "3.4"
+install:
+  - pip install nose pep8 flake8 coveralls
+script:
+  - nosetests --with-coverage
+  - pep8 metoo
+  - flake8 metoo
+after_success:
+  - coveralls
