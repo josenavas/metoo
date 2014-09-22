@@ -22,28 +22,34 @@ should be treated as **pre-alpha**.
 
 ### Client-Server Architecture
 QIIME2 will use a client-server architecture allowing it to provide a graphical
-interface (this will also enable multiple arbitrary interfaces e.g. CLI, iPad, BaseSpace).
-This architecture is supported in a single host (e.g. a laptop or VirtualBox) and multi-host deployment (e.g. a cluster or EC2).
-**All interactions** with QIIME2 will happen through a standardized protocol provided by the server (_qiime-server_).
-The goal of the protocol is to reduce complexity and duplication in defining multiple interfaces. [How is this different from pyqi?](#How is this different from pyqi?)
-Additionally it will allow remote execution over a network barrier which has been a difficulty in the past with pyqi.
+interface (this will also enable multiple arbitrary interfaces, e.g., CLI, iPad,
+BaseSpace). This architecture is supported in a single host (e.g. a laptop or
+VirtualBox) and multi-host deployment (e.g. a cluster or EC2). **All
+interactions** with QIIME2 will happen through a standardized protocol provided
+by the server (_qiime-server_). The goal of the protocol is to reduce complexity
+and duplication in defining multiple interfaces.
+[How is this different from pyqi?](#How is this different from pyqi?)
+Additionally it will allow remote execution over a network barrier which has
+been a difficulty in the past with pyqi.
 
 ### Workers
-Once the _qiime-server_ has received a request via the protocol, it will launch a worker job
-to preform the computation. The _qiime-server_ will provide status updates to clients through the protocol.
-The worker job will record the results as an _artifact_ in a database.
+Once the _qiime-server_ has received a request via the protocol, it will launch
+a worker job to perform the computation. The _qiime-server_ will provide status
+updates to clients through the protocol. The worker job will record the results
+as an _artifact_ in a database.
 
 ### Database
-**Note: This is not intended to be a substitute for the QIIME database project.**
+**Note: This is not intended to be a substitute for the QIIME database
+project.**
 
-The database represents a significant departure from the way QIIME currently handles
-data (e.g. a directory).  Presently, data is continuously serialized and deserialized
-at each step to and from the file-system. The resulting data is highly denormalized:
-sample ids are duplicated throughout every file format used in QIIME. Because
-QIIME fundamentally deals with samples at every step, they will become the basis
-of structuring output in a normalized way. The database will store normalized data
-as _artifacts_. These are pieces of data which are the counterpart to QIIME's
-input and output files.
+The database represents a significant departure from the way QIIME currently
+handles data (e.g. a directory).  Presently, data is continuously serialized and
+deserialized at each step to and from the file-system. The resulting data is
+highly denormalized: sample IDs are duplicated throughout every file format used
+in QIIME. Because QIIME fundamentally deals with samples at every step, they
+will become the basis of structuring output in a normalized way. The database
+will store normalized data as _artifacts_. These are pieces of data which are
+the counterpart to QIIME's input and output files.
 
 ### Graphical Interface (Web-based)
 One of the primary motivations for a web-based interface is both the ease of use
