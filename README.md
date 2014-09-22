@@ -20,7 +20,7 @@ should be treated as **pre-alpha**.
 
 ## Differences
 
-### Client-Server
+### Client-Server Architecture
 QIIME2 will use a client-server architecture allowing it to provide a graphical
 interface (this will also enable multiple arbitrary interfaces e.g. CLI, iPad, BaseSpace).
 This architecture is supported in a single host (e.g. a laptop or VirtualBox) and multi-host deployment (e.g. a cluster or EC2).
@@ -58,18 +58,43 @@ Users will then be able to preview, export, download, visualize, and view the hi
 Additionally they may be able to query their results like a database (because it is one).
 
 ### Semantic Type System
-All _artifacts_ are described by a semantic type. There are two kinds of types:
+All inputs and outputs of methods and workflows are _artifacts_. All
+_artifacts_ have a semantic type. This allows inference and simple
+validation when creating analyses (e.g., showing a user what methods/workflows
+can be applied to an _artifact_).
 
+There are two kinds of types: _abstract_ and _concrete_ types. An _abstract_
+type is a group or collection of _concrete_ types that share a common interface.
+A _concrete_ type is specific flavor of an _abstact_ type. Two _artifacts_ of
+different _abstract_ types are never considered equivalent because they may not
+have compatible interfaces, whereas two _artifacts_ of the same _abstract_ type
+but different _concrete_ types may be considered equivalent as long as the user
+is aware that they may be providing a semantically-inappropriate type as input.
 
+The type system can be made clearer with a few examples. In the context of
+microbial ecology:
 
-In the context of microbial ecology: unrarefied and rarefied OTU tables are structurally similar, and methods will
-work on either, but some methods (e.g. alpha and beta diversity) would prefer a
-rarefied OTU table, while others(such as rarefaction methods) expect an
-unrarified OTU table. Consider also a filtered vs unfiltered alignment being passed
-to make_phylogeny, generally the user would want to pass a filtered alignment, though
-it may be necessary to use an unfiltered alignment in odd cases.
+- Unrarefied and rarefied OTU tables are of the same _abstract_ type, and
+methods will work with either, but some methods (e.g. alpha and beta diversity)
+would semantically prefer a rarefied OTU table, while others (such as
+rarefaction methods) expect an unrarified OTU table.
+
+- Filtered and unfiltered alignments are of the same _abstract_ type, and both
+types can be passed to `make_phylogeny.py`. However, generally the user would
+want to pass a filtered alignment, though it may be necessary to use an
+unfiltered alignment in odd cases. The type system would warn users when
+provided an unfiltered alignment, but the user can override by acknowledging
+the warning.
+
 As an analogy: a pumpkin pie is functionally equivalent to an apple pie, but
-may make less sense on the 4th of July.
+may make less sense on the 4th of July. Pumpkin and apple pies are the same
+_abstract_ type, but are different _concrete_ types.
+
+The semantic type system will support a wide range of primitive and
+microbial-ecology specific types, as well as arbitrary user-defined types.
+
+### Plugin System
+The plugin system will replace the 
 
 ### How is the protocol different from pyqi?
 
