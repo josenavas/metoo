@@ -3,7 +3,7 @@ QIIME2
 
 [![Build Status](https://travis-ci.org/biocore/metoo.png?branch=master)](https://travis-ci.org/biocore/metoo) [![Coverage Status](https://coveralls.io/repos/biocore/metoo/badge.png)](https://coveralls.io/r/biocore/metoo)
 
-*Staging ground for QIIME 2 development*
+*Staging ground for QIIME2 development*
 
 This repository serves as a staging ground for the next major version of
 [QIIME](http://qiime.org/) (i.e., QIIME2), which will be a complete redesign
@@ -94,7 +94,36 @@ The semantic type system will support a wide range of primitive and
 microbial-ecology specific types, as well as arbitrary user-defined types.
 
 ### Plugin System
-The plugin system will replace the 
+The plugin system will replace the collection of scripts currently in QIIME by
+providing a repository of domain-specific computation (e.g., methods,
+algorithms, and analyses commonly used in microbial ecology) that has been
+registered with QIIME2.
+
+The plugin system will support two types of computation: _methods_ and
+_workflows_. A _method_ is an atomic unit of computation and is analogous to a
+function: it takes some input(s) (some possibly required and some optional) and
+produces some output(s). A _workflow_ is a _directed acyclic graph_ (DAG) that
+is composed of one or more _methods_ and/or other _workflows_. Conceptually, a
+workflow can still be viewed as a function that accepts input and creates
+output, just like a _method_.
+
+Each _method_/_workflow_ will be registered with QIIME2's plugin system. While
+the way to register computation can vary is an implementation detail, we are
+proposing to use Python 3's
+[function annotations](http://legacy.python.org/dev/peps/pep-3107/) as a clean,
+elegant, and built-in way to describe a function's inputs and outputs.
+Alternatives include decorators or custom docstring formats.
+
+When computation is registered with the plugin system, its inputs and outputs
+will be described using types in the
+[Semantic Type System](#Semantic Type System). Custom semantic types may also be
+defined in the plugin system.
+
+The plugins provided with QIIME2 will include functionality specific to
+microbial ecology. The plugin system will be easily extendable to allow
+users/developers to register their own custom functionality with the system.
+Thus, there will be an "official" set of plugins that ship with QIIME2, but the
+system will also allow users to install plugins from other sources.
 
 ### How is the protocol different from pyqi?
 
