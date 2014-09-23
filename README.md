@@ -15,10 +15,19 @@ production. It will be transitioned to the canonical QIIME repo
 to be released. This package is under active development and all functionality
 should be treated as **pre-alpha**.
 
-# Executive Summary
+# QIIME2 Roadmap: Executive Summary
+We propose a complete re-envisioning and redesign of QIIME from the ground up,
+hereby referred to as QIIME2. In this document, we provide a concise and
+high-level overview of various aspects of the QIIME2 project and how they differ
+from the current QIIME software package.
 
+**Note:** This summary is a **proposal** of high-level ideas that will guide the
+design and implementation of QIIME2. Nothing is finalized and everything is
+subject to change. Once we reach agreement on the project's direction and
+vision, we will provide additional documents with further details
+(e.g., requirements and design documents).
 
-## Differences
+## Aspects of QIIME2
 
 ### Client-Server Architecture
 QIIME2 will use a client-server architecture, allowing it to provide a graphical
@@ -159,7 +168,3 @@ system will also allow users to install plugins from other sources.
 
 
 ## Timeline
-
-
-# tl;dr:
-Don't worry, it will be amazing.
