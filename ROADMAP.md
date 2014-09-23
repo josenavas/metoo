@@ -144,7 +144,7 @@ Alternative implementations include decorators or custom docstring formats.
 
 When computation is registered with the plugin system, its inputs and outputs
 will be described using types in the
-[Semantic Type System](#Semantic Type System). Custom semantic types may also be
+[Semantic Type System](#semantic-type-system). Custom semantic types may also be
 defined in the plugin system.
 
 The plugins provided with QIIME2 will include functionality specific to
