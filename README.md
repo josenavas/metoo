@@ -21,16 +21,17 @@ should be treated as **pre-alpha**.
 ## Differences
 
 ### Client-Server Architecture
-QIIME2 will use a client-server architecture allowing it to provide a graphical
+QIIME2 will use a client-server architecture, allowing it to provide a graphical
 interface (this will also enable multiple arbitrary interfaces, e.g., CLI, iPad,
-BaseSpace). This architecture is supported in a single host (e.g. a laptop or
+BaseSpace). This architecture is supported in a single host (e.g. laptop or
 VirtualBox) and multi-host deployment (e.g. a cluster or EC2). **All
 interactions** with QIIME2 will happen through a standardized protocol provided
 by the server (_qiime-server_). The goal of the protocol is to reduce complexity
-and duplication in defining multiple interfaces.
-[How is this different from pyqi?](#How is this different from pyqi?)
-Additionally it will allow remote execution over a network barrier which has
-been a difficulty in the past with pyqi.
+and duplication in defining multiple interfaces (see
+[here](#How is this different from pyqi?) for how this differs from
+[pyqi](http://pyqi.readthedocs.org/en/latest/)). Additionally it will allow
+remote execution over a network barrier which has been a difficulty in the past
+with pyqi.
 
 ### Workers
 Once the _qiime-server_ has received a request via the protocol, it will launch
@@ -43,27 +44,45 @@ as an _artifact_ in a database.
 project.**
 
 The database represents a significant departure from the way QIIME currently
-handles data (e.g. a directory).  Presently, data is continuously serialized and
-deserialized at each step to and from the file-system. The resulting data is
-highly denormalized: sample IDs are duplicated throughout every file format used
-in QIIME. Because QIIME fundamentally deals with samples at every step, they
+handles data (e.g. storing input and output files in a directory structure).
+Presently, data is serialized and deserialized to and from the file-system at
+each step in an analysis. The resulting data are highly denormalized, as sample
+IDs are duplicated throughout every file format used in QIIME. This gives rise
+to a number of issues. For example, it is very difficult and error-prone to
+rename a sample ID after sequences have been demultiplexed.
+
+Since QIIME fundamentally deals with samples at every step in an analysis, they
 will become the basis of structuring output in a normalized way. The database
-will store normalized data as _artifacts_. These are pieces of data which are
-the counterpart to QIIME's input and output files.
+will store this normalized data as _artifacts_. _artifacts_ are data which are
+analogous to QIIME's input and output files, but annotated with additional
+metadata (e.g., history/provenance, semantic type, etc.). An _artifact_ can be
+data that has been imported into QIIME2 (e.g., raw sequence data), or output
+produced during an analysis (e.g., a UniFrac distance matrix). _artifacts_ can
+be exported in a variety of file formats (e.g., for use in external tools, to
+share with collaborators, or include in a publication).
 
 ### Graphical Interface (Web-based)
-One of the primary motivations for a web-based interface is both the ease of use
-and portability. We propose that the web-interface not merely wrap a command
-line interface, but instead provide a powerful and interactive workflow-centered
-interaction model. Currently it is very difficult to create custom workflows in
-QIIME (only a few developers are able to). The main purpose of the interface is
-to allow users to easily create arbitrary workflows by dragging and dropping
-methods together. They will be guided by a strong semantic type system to
-prevent easily-avoided errors such as passing pre-split-libraries sequence data
-into OTU picking workflows. Users will then be able to preview, export,
-download, visualize, and view the history of their data as it becomes available.
-Additionally they may be able to query their results like a database (because it
-is one).
+Currently it is very difficult to create custom workflows in QIIME; only a few
+core developers are able to, and it leads to messy and error-prone code that is
+difficult to maintain and validate with unit tests. Current QIIME workflows are
+essentially black boxes: many users have voiced concern (e.g., on the QIIME
+forum and at workshops) that they don't know the exact steps a workflow is
+performing. Users have also been asking for a graphical way to perform QIIME
+analyses since QIIME's first release; this is likely the most popular request
+we've received, and it would significantly cut down the support burden on the
+QIIME forum.
+
+To address these concerns, we propose an easy-to-use, portable web-based
+interface as the primary way to interact with QIIME2. The web-interface will not
+merely wrap a command line interface (as we attempted with pyqi), but instead
+will provide a powerful workflow-centered interaction model for both technical
+and non-technical users. The interface will allow users to easily create
+arbitrary workflows by dragging and dropping methods together. They will be
+guided by a strong semantic type system to prevent easily-avoided errors such as
+passing pre-split-libraries sequence data into OTU picking workflows. Users will
+then be able to preview, export, download, visualize, and view the history of
+their data as it becomes available. Additionally they may be able to query their
+results like a database (because they are stored in one).
 
 ### Semantic Type System
 All inputs and outputs of methods and workflows are _artifacts_. All
@@ -102,7 +121,7 @@ The semantic type system will support a wide range of primitive and
 microbial-ecology specific types, as well as arbitrary user-defined types.
 
 ### Plugin System
-The plugin system will replace the collection of scripts currently in QIIME by
+The plugin system will replace QIIME's current collection of scripts by
 providing a repository of domain-specific computation (e.g., methods,
 algorithms, and analyses commonly used in microbial ecology) that has been
 registered with QIIME2.
@@ -110,14 +129,14 @@ registered with QIIME2.
 The plugin system will support two types of computation: _methods_ and
 _workflows_. A _method_ is an atomic unit of computation and is analogous to a
 function: it takes some input(s) (some possibly required and some optional) and
-produces some output(s). A _workflow_ is a _directed acyclic graph_ (DAG) that
+produces some output(s). A _workflow_ is a directed acyclic graph (DAG) that
 is composed of one or more _methods_ and/or other _workflows_. Conceptually, a
-workflow can still be viewed as a function that accepts input and creates
+_workflow_ can still be viewed as a function that accepts input and creates
 output, just like a _method_.
 
 Each _method_/_workflow_ will be registered with QIIME2's plugin system. While
-the way to register computation can vary is an implementation detail, we are
-proposing to use Python 3's
+the way to register computation is an implementation detail, we propose the use
+of Python 3's
 [function annotations](http://legacy.python.org/dev/peps/pep-3107/) as a clean,
 elegant, and built-in way to describe a function's inputs and outputs.
 Alternatives include decorators or custom docstring formats.
