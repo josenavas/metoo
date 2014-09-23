@@ -53,15 +53,17 @@ the counterpart to QIIME's input and output files.
 
 ### Graphical Interface (Web-based)
 One of the primary motivations for a web-based interface is both the ease of use
-and portability. We propose that the web-interface not merely wrap a command line interface, but
-instead provide a powerful and interactive workflow centered interaction model.
-Currently it is very difficult to create custom workflows in QIIME (only a few developers are able to).
-The main purpose of the interface is to allow users to easily create arbitrary workflows
-by dragging and dropping methods together. They will be guided by a strong
-semantic type system to prevent easily avoided errors such as passing
-pre-split-libraries sequence data into OTU picking workflows.
-Users will then be able to preview, export, download, visualize, and view the history of their data as it becomes available.
-Additionally they may be able to query their results like a database (because it is one).
+and portability. We propose that the web-interface not merely wrap a command
+line interface, but instead provide a powerful and interactive workflow-centered
+interaction model. Currently it is very difficult to create custom workflows in
+QIIME (only a few developers are able to). The main purpose of the interface is
+to allow users to easily create arbitrary workflows by dragging and dropping
+methods together. They will be guided by a strong semantic type system to
+prevent easily-avoided errors such as passing pre-split-libraries sequence data
+into OTU picking workflows. Users will then be able to preview, export,
+download, visualize, and view the history of their data as it becomes available.
+Additionally they may be able to query their results like a database (because it
+is one).
 
 ### Semantic Type System
 All inputs and outputs of methods and workflows are _artifacts_. All
