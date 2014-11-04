@@ -5,9 +5,9 @@
 omit =
     */tests*
     */__init__.py
-source = metoo
+source = qiime
 branch = True
-include = */metoo/*
+include = */qiime/*
 
 [report]
 exclude_lines =
@@ -18,4 +18,3 @@ exclude_lines =
 omit =
     */tests*
     */__init__.py
-

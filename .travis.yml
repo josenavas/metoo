@@ -9,7 +9,7 @@ install:
   - pip install nose pep8 flake8 coveralls
 script:
   - nosetests --with-coverage
-  - pep8 metoo
-  - flake8 metoo
+  - pep8 qiime
+  - flake8 qiime
 after_success:
   - coveralls
