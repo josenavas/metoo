@@ -13,7 +13,7 @@ def start():
     from qiime.core.registry import plugin_registry
     p = plugin_registry._plugins
     print(p)
-    print(p['qiime'].get_methods())
+    print(p['org.qiime.plugins.qiime'].get_methods())
 
 if __name__ == '__main__':
     qcli()
