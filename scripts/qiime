@@ -1,0 +1,19 @@
+#!/usr/bin/env python3
+
+import click
+
+@click.group()
+def qcli():
+    pass
+
+@qcli.command()
+def start():
+    import qiime.service
+    qiime.service.init()
+    from qiime.core.registry import plugin_registry
+    p = plugin_registry._plugins
+    print(p)
+    print(p['qiime'].get_methods())
+
+if __name__ == '__main__':
+    qcli()
