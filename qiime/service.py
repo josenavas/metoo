@@ -4,6 +4,7 @@ from importlib import import_module
 import asyncio
 from autobahn.asyncio import wamp, websocket
 
+from qiime.api import get_api_methods
 from qiime.core.registry import plugin_registry
 
 def init():
@@ -43,16 +44,11 @@ class ProtocolServer(wamp.ApplicationSession):
 
     @asyncio.coroutine
     def onJoin(self, details):
-        print("session ready")
-
         try:
-            def list_methods():
-                return [m.uri for m in plugin_registry.get_methods()]
-
-            yield from self.register(list_methods, "org.qiime.api.list_methods")
+            for api, uri in get_api_methods():
+                yield from self.register(api, uri)
 
             for method in plugin_registry.get_methods():
                 yield from self.register(method, method.uri)
-                print("procedure registered")
         except Exception as e:
             print("could not register procedure: {0}".format(e))
