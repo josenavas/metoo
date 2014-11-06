@@ -24,6 +24,9 @@ def method_info(method_uri):
         'uri': method.uri,
         'name': method.name,
         'help': method.docstring,
-        # We need to work out the type system before this can be effectively serialized
-        # 'annotations': method.annotations
+        'annotations': {
+            'artifacts': [],  # (parameterized) artifacts (defined in org.qiime.plugins.[plugin-name].artifacts)
+            'parameters': {}, # (parameterized) primitives (defined in org.qiime.types.primitives|parameterized)
+            'return': []      # (parameterized) artifacts
+        }
     }

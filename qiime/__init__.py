@@ -15,7 +15,7 @@ class Plugin(object):
 
     def register_method(self, name):
         def decorator(function):
-            uri = "%s.%s" % (self.uri, function.__name__)
+            uri = "%s.methods.%s" % (self.uri, function.__name__)
             if self.has_method(uri):
                 raise Exception()
 

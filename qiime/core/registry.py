@@ -18,7 +18,7 @@ class PluginRegistry(object):
                 yield method
 
     def get_method(self, uri):
-        return self.get_plugin('.'.join(uri.split('.')[:-1])).get_method(uri)
+        return self.get_plugin('.'.join(uri.split('.')[:-2])).get_method(uri)
 
     def get_plugin(self, uri):
         return self._plugins[uri]
