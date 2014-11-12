@@ -1,8 +1,8 @@
 import os
 from importlib import import_module
 
-import asyncio
-from autobahn.asyncio import wamp, websocket
+from tornado.ioloop import IOLoop
+from tornado.web import RequestHandler, Application, url
 
 from qiime.api import get_api_methods
 from qiime.core.registry import plugin_registry
@@ -15,40 +15,46 @@ def load_plugins():
     import_module('qiime.plugins')
 
 def start_server():
-    ## 1) create a WAMP router factory
-    router_factory = wamp.RouterFactory()
-    ## 2) create a WAMP router session factory
-    session_factory = wamp.RouterSessionFactory(router_factory)
-    ## 3) Optionally, add embedded WAMP application sessions to the router
-    session_factory.add(ProtocolServer())
-    ## 4) create a WAMP-over-WebSocket transport server factory
-    transport_factory = websocket.WampWebSocketServerFactory(session_factory,
-                                                             debug = False,
-                                                             debug_wamp = False)
-    ## 5) start the server
-    loop = asyncio.get_event_loop()
-    coro = loop.create_server(transport_factory, '127.0.0.1', 8080)
-    server = loop.run_until_complete(coro)
-    try:
-        ## 6) now enter the asyncio event loop
-        loop.run_forever()
-    except KeyboardInterrupt:
-        pass
-    finally:
-        server.close()
-        loop.close()
+    app = Application(
+            get_api_routes() +
+            get_arifact_routes()
+        )
+    app.listen(8888)
+    IOLoop.current().start()
 
-class ProtocolServer(wamp.ApplicationSession):
-    def onConnect(self):
-        self.join(u"realm1")
 
-    @asyncio.coroutine
-    def onJoin(self, details):
-        try:
-            for api, uri in get_api_methods():
-                yield from self.register(api, uri)
+def get_api_routes():
+    class APIHandler(RequestHandler):
+        def get(self, method_name, argument=None):
+            method_lookup = get_api_methods()
+            try:
+                action = method_lookup[method_name]
+            except KeyError:
+                self.clear()
+                self.set_status(404)
+                self.write('404 yo')
+                return
 
-            for method in plugin_registry.get_methods():
-                yield from self.register(method, method.uri)
-        except Exception as e:
-            print("could not register procedure: {0}".format(e))
+            kwargs = {}
+            for key, value in self.request.arguments.items():
+                kwargs[key] = [v.decode("utf-8") for v in value]
+
+            if argument is not None:
+                self.write(action(argument, **kwargs))
+            else:
+                self.write(action(**kwargs))
+
+    return [url(r'/api/(.+)/(.+)', APIHandler), url(r'/api/(.+)', APIHandler)]
+
+def get_artifact_routes():
+    class ArtifactHandler(RequestHandler):
+        def get(self):
+            pass
+
+        def post(self):
+            pass
+
+        def delete(self):
+            pass
+
+    return [url(r'/artifacts/(.+)', ArtifactHandler)]

@@ -40,5 +40,14 @@ class Method(object):
 
         self._action = wrapped_action
 
-    def __call__(self, *args, **kwargs):
-        return self._action(*args, **kwargs)
+    def __call__(self, *args, hmac=None, **kwargs):
+        # Parallelism goes here
+        try:
+            result = self._action(*self._resolve_uris(args), **kwargs)
+            print(result)
+        except Exception as e:
+            return str(e)
+        return "uri to subscribe to"
+
+    def _resolve_uris(self, args):
+        return args

@@ -1,9 +1,9 @@
 from qiime.core.registry import plugin_registry
 
-_api_methods = []
+_api_methods = {}
 
 def api_method(function):
-    _api_methods.append((function, "org.qiime.api.%s" % function.__name__))
+    _api_methods[function.__name__] = function
     return function
 
 def get_api_methods():
@@ -11,11 +11,11 @@ def get_api_methods():
 
 @api_method
 def list_methods(plugins=None):
-    return [m.uri for m in plugin_registry.get_methods(plugins=plugins)]
+    return {'methods': [m.uri for m in plugin_registry.get_methods(plugins=plugins)]}
 
 @api_method
 def list_plugins():
-    return list(plugin_registry.get_plugin_uris())
+    return {'plugins': list(plugin_registry.get_plugin_uris())}
 
 @api_method
 def method_info(method_uri):

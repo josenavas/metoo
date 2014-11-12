@@ -21,6 +21,9 @@ class Plugin(object):
             return function
         return decorator
 
+    def register_workflow(self, name):
+        pass
+
     def has_method(self, uri):
         return uri in self._methods
 

@@ -1,7 +1,9 @@
 from abc import ABCMeta, abstractmethod
 
+class BaseType(object):
+    pass
 
-class Artifact(object, metaclass=ABCMeta):
+class Artifact(BaseType, metaclass=ABCMeta):
     @property
     @classmethod
     @abstractmethod
