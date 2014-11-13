@@ -21,3 +21,5 @@ def get_connection():
 # TODO this should be specified in a config file and we should support multiple
 # types of databases
 _connection = _initialize_db()
+
+# TODO when to close the connection?

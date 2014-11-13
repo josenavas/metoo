@@ -57,7 +57,23 @@ def create_artifact(request, name, artifact_type):
 
 @route('/artifacts/(.+)', GET)
 def artifact_info(artifact_id):
-    pass
+    conn = get_connection()
+    c = conn.cursor()
+
+    c.execute("SELECT name, type, data FROM artifact WHERE id = ?",
+              (artifact_id,))
+    row = c.fetchone()
+
+    c.close()
+    conn.commit()
+
+    # TODO fix these names...
+    return {
+        'artifact_id': artifact_id,
+        'name': row[0],
+        'artifact_type': row[1],
+        'bytes': len(row[2])
+    }
 
 @route('/artifacts/(.+)', PUT)
 def update_artifact(request, artifact_id):
