@@ -36,7 +36,7 @@ def route(path, method, params=(), authenticate=True):
                 args = list(args)
                 # TODO: get smarter about passing only the needed data instead
                 # of a full request object.
-                args.insert(0, self.request)
+                args.insert(0, request_handler.request)
             request_handler.write(function(*args, **kwargs))
 
         if method == GET:

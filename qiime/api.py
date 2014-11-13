@@ -29,18 +29,9 @@ def method_info(method_uri):
 
 @route('/artifacts', POST, params=['name', 'artifact_type'])
 def create_artifact(request, name, artifact_type):
-    files = request.files
-    if len(files) != 1:
-        raise ValueError("Need exactly 1 named file to upload as artifact, "
-                         "found %d." % len(files))
-
-    upload_name, file_infos = files.popitem()
-    if len(file_infos) != 1:
-        raise ValueError("Need exactly 1 file to upload as artifact, found "
-                         "named file %s with %d payloads." %
-                         (repr(upload_name), len(file_infos)))
-    file_info = file_infos[0]
-    data = file_info['body'] # bytes
+    data = get_file_data(request)
+    if data is None:
+        raise ValueError("Cannot create artifact: missing uploaded file.")
 
     conn = get_connection()
     c = conn.cursor()
@@ -75,10 +66,53 @@ def artifact_info(artifact_id):
         'bytes': len(row[2])
     }
 
-@route('/artifacts/(.+)', PUT)
-def update_artifact(request, artifact_id):
-    pass
+@route('/artifacts/(.+)', PUT, params=['name', 'artifact_type'])
+def update_artifact(request, artifact_id, name=None, artifact_type=None):
+    data = get_file_data(request)
+
+    update_fields = []
+    update_values = []
+
+    # TODO we'll need to be smarter about updating type and/or data
+    if name is not None:
+        update_fields.append('name = ?')
+        update_values.append(name)
+    if artifact_type is not None:
+        update_fields.append('type = ?')
+        update_values.append(artifact_type)
+    if data is not None:
+        update_fields.append('data = ?')
+        update_values.append(data)
+
+    conn = get_connection()
+    c = conn.cursor()
+
+    query = "UPDATE artifact SET %s WHERE id = ?" % ', '.join(update_fields)
+    c.execute(query, update_values + [artifact_id])
+
+    c.close()
+    conn.commit()
+    return {
+        'status': 'success'
+    }
 
 @route('/artifacts/(.+)', DELETE)
 def delete_artifact(artifact_id):
     pass
+
+def get_file_data(request):
+    files = request.files
+    if not files:
+        return None
+
+    if len(files) > 1:
+        raise ValueError("Need 1 named file to upload as artifact, found %d."
+                         % len(files))
+
+    upload_name, file_infos = files.popitem()
+    if len(file_infos) != 1:
+        raise ValueError("Need exactly 1 file to upload as artifact, found "
+                         "named file %s with %d payloads." %
+                         (repr(upload_name), len(file_infos)))
+    file_info = file_infos[0]
+    return file_info['body'] # bytes
