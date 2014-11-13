@@ -12,7 +12,11 @@ _urls = defaultdict(dict)
 def yield_urls():
     for key, value in _urls.items():
         class APIHandler(RequestHandler):
-            pass
+            def set_default_headers(self):
+                self.set_header("Access-Control-Allow-Origin", "*")
+
+            def options(self):
+                pass
 
         for method, action in value.items():
             setattr(APIHandler, method, action)
@@ -21,19 +25,19 @@ def yield_urls():
 
 def route(path, method, params=(), authenticate=True):
     def decorator(function):
-        def wrapped_function(self, *args, **kwargs):
+        def wrapped_function(request_handler, *args, **kwargs):
             for param_name in params:
-                kwargs[param_name] = self.get_argument(param_name, default=None)
+                kwargs[param_name] = request_handler.get_argument(param_name, default=None)
             if authenticate:
                 # TODO: Authenticate here
                 pass
             # TODO: validate parameters passed
-            if self.request.method == 'POST' or self.request.method == 'PUT':
+            if request_handler.request.method == 'POST' or request_handler.request.method == 'PUT':
                 args = list(args)
                 # TODO: get smarter about passing only the needed data instead
                 # of a full request object.
                 args.insert(0, self.request)
-            self.write(function(*args, **kwargs))
+            request_handler.write(function(*args, **kwargs))
 
         if method == GET:
             _urls[path]['get'] = wrapped_function
