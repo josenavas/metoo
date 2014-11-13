@@ -55,6 +55,8 @@ def artifact_info(artifact_id):
               (artifact_id,))
     row = c.fetchone()
 
+    # TODO handle the case where the artifact doesn't exist
+
     c.close()
     conn.commit()
 
@@ -98,7 +100,18 @@ def update_artifact(request, artifact_id, name=None, artifact_type=None):
 
 @route('/artifacts/(.+)', DELETE)
 def delete_artifact(artifact_id):
-    pass
+    conn = get_connection()
+    c = conn.cursor()
+
+    # TODO handle the case where the artifact doesn't exist
+    c.execute("DELETE FROM artifact WHERE id = ?", (artifact_id,))
+
+    c.close()
+    conn.commit()
+
+    return {
+        'status': 'success'
+    }
 
 def get_file_data(request):
     files = request.files
