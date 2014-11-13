@@ -4,10 +4,43 @@
         <title>Awesome example test for web pages totally cool with demo</title>
         <script src='http://cdnjs.cloudflare.com/ajax/libs/q.js/1.1.1/q.min.js'></script>
         <script src='script.js'></script>
+        <script>
+            q = qiime.connect('http://localhost:8888');
+        </script>
     </head>
     <body>
-        <div class='api'>
-        <h3>list_methods</h3>
-        </div>
+
+        <script>
+            function make_result(name, value) {
+                var body = document.body;
+                var wrapper = document.createElement("div");
+                body.appendChild(wrapper);
+                var title = document.createElement("h3");
+                var result = document.createElement("pre");
+                title.innerHTML = name;
+                result.innerHTML = value;
+                wrapper.appendChild(title);
+                wrapper.appendChild(result);
+            }
+
+            api = [
+                ['list_methods', undefined],
+                ['list_methods', 'org.qiime.plugins.qiime'],
+                ['list_methods', 'org.qiime.plugins.mothur'],
+                ['list_plugins', undefined],
+                ['method_info', 'org.qiime.plugins.qiime.methods.some_method'],
+                ['method_info', 'org.qiime.plugins.qiime.methods.something_else'],
+            ]
+
+            for(var i=0; i<api.length; i++) {
+                (function(i){
+                    q[api[i][0]](api[i][1]).then(function(v){
+                        name = api[i][1] ? api[i][0] + ": " + api[i][1] : api[i][0]
+                        value = JSON.stringify(v, undefined, 4)
+                        make_result(name, value)
+                    })
+                })(i)
+            }
+        </script>
     </body>
 </html>

@@ -21,22 +21,22 @@
 
             var c = {};
             c.get = function(path, parameters) {
-                var uri = host + path
+                var url = host + path
                 var first_iter = true;
                 for(var name in parameters) {
                     if (parameters.hasOwnProperty(name)) {
                         if(first_iter) {
-                            uri += '?';
+                            url += '?';
                             first_iter = false;
                         } else {
-                            uri += '&';
+                            url += '&';
                         }
-                        uri += encodeURIComponent(name) + "=";
-                        uri += encodeURIComponent(parameters[name]);
+                        url += encodeURIComponent(name) + "=";
+                        url += encodeURIComponent(parameters[name]);
                     }
                 }
                 var d = Promise.defer()
-                xmlhttprequest('GET', uri, d.resolve, d.reject)
+                xmlhttprequest('GET', url, d.resolve, d.reject)
                 return d.promise;
             }
 
@@ -73,7 +73,11 @@
         }
 
         api.list_methods = function(plugin) {
-
+            kwargs = {}
+            if(plugin) {
+                kwargs.plugin = plugin
+            }
+            return connection.get('/api/list_methods', kwargs)
         }
 
         api.list_plugins = function() {
@@ -81,7 +85,7 @@
         }
 
         api.method_info = function(method) {
-
+            return connection.get('/api/method_info/'+method)
         }
 
         return api;
