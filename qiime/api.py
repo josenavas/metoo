@@ -113,6 +113,20 @@ def delete_artifact(artifact_id):
         'status': 'success'
     }
 
+@route('/artifacts', GET)
+def list_artifacts():
+    conn = get_connection()
+    c = conn.cursor()
+
+    artifact_ids = [row[0] for row in c.execute("SELECT id FROM artifact")]
+
+    c.close()
+    conn.commit()
+
+    return {
+        'artifact_ids': artifact_ids
+    }
+
 def get_file_data(request):
     files = request.files
     if not files:
