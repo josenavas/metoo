@@ -1,23 +1,18 @@
 from qiime.core.registry import plugin_registry
+from qiime.core.tornadotools import route, GET, POST, PUT, DELETE, yield_urls
 
-_api_methods = {}
+def get_urls():
+    return list(yield_urls())
 
-def api_method(function):
-    _api_methods[function.__name__] = function
-    return function
+@route('/api/list_methods', GET, params=['plugin'])
+def list_methods(plugin=None):
+    return {'methods': [m.uri for m in plugin_registry.get_methods(plugin=plugin)]}
 
-def get_api_methods():
-    return _api_methods
-
-@api_method
-def list_methods(plugins=None):
-    return {'methods': [m.uri for m in plugin_registry.get_methods(plugins=plugins)]}
-
-@api_method
+@route('/api/list_plugins', GET)
 def list_plugins():
     return {'plugins': list(plugin_registry.get_plugin_uris())}
 
-@api_method
+@route('/api/method_info/(.+)', GET)
 def method_info(method_uri):
     method = plugin_registry.get_method(method_uri)
     return {
@@ -30,3 +25,19 @@ def method_info(method_uri):
             'return': []      # (parameterized) artifacts
         }
     }
+
+@route('/artifacts', POST)
+def create_artifact(request):
+    pass
+
+@route('/artifacts/(.+)', GET)
+def artifact_info(artifact_id):
+    pass
+
+@route('/artifacts/(.+)', PUT)
+def update_artifact(request, artifact_id):
+    pass
+
+@route('/artifacts/(.+)', DELETE)
+def delete_artifact(artifact_id):
+    pass

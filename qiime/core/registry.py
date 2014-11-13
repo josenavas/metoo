@@ -10,9 +10,11 @@ class PluginRegistry(object):
         for plugin in self._plugins.values():
             yield plugin.uri
 
-    def get_methods(self, plugins=None):
-        if plugins is None:
+    def get_methods(self, plugin=None):
+        if plugin is None:
             plugins = self._plugins.keys()
+        else:
+            plugins = [plugin]
         for uri in plugins:
             for method in self.get_plugin(uri).get_methods().values():
                 yield method
