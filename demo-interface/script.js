@@ -72,6 +72,10 @@
 
         }
 
+        api.list_artifacts = function() {
+            return connection.get('/artifacts')
+        }
+
         api.list_methods = function(plugin) {
             kwargs = {}
             if(plugin) {
