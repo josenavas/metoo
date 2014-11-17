@@ -25,7 +25,7 @@ List of plugins.
 ### GET
 Info about the plugin, e.g., author, description, if its an official plugin, etc.
 
-## /study
+## /studies
 
 ### GET
 List studies you have access to.
@@ -33,7 +33,7 @@ List studies you have access to.
 ### POST
 Create a new study.
 
-## /study/:study
+## /studies/:study
 
 ### GET
 Information about the study, e.g., name, description, creation time, etc.
@@ -44,7 +44,7 @@ Update an existing study.
 ### DELETE
 Delete an existing study.
 
-## /study/:study/artifacts
+## /studies/:study/artifacts
 
 ### GET
 Provide artifact abstract file system tree.
@@ -55,7 +55,7 @@ Create a new artifact.
 ### PUT
 Link an existing artifact.
 
-## /study/:study/artifacts/:artifact
+## /studies/:study/artifacts/:artifact
 
 ### GET
 Information about the artifact. Query parameter ``export`` specifies
@@ -68,7 +68,7 @@ type cannot be modified.
 ### DELETE
 Delete artifact.
 
-## /study/:study/jobs
+## /studies/:study/jobs
 
 ### GET
 List all jobs. Query parameter to filter by job status (completed, running,
@@ -77,7 +77,7 @@ etc.)
 ### POST
 Create a new job.
 
-## /study/:study/jobs/:job
+## /studies/:study/jobs/:job
 
 ### GET
 Information about the job, e.g., status. SSE will also happen here via a query
@@ -89,7 +89,7 @@ Update the job: pause, resume, or update a downstream parameter.
 ### DELETE
 Terminate the job.
 
-## /study/:study/workflows
+## /studies/:study/workflows
 
 ### GET
 List all workflow templates.
@@ -97,7 +97,7 @@ List all workflow templates.
 ### POST
 Create a new workflow template.
 
-## /study/:study/workflows/:workflow
+## /studies/:study/workflows/:workflow
 
 ### GET
 Return workflow template and metadata.
