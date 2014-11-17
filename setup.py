@@ -37,7 +37,9 @@ setup(name='qiime',
       test_suite='nose.collector',
       scripts=glob('scripts/*'),
       packages=find_packages(),
-      install_requires=['click', 'tornado'],
+      # peewee[playhouse] won't be necessary for postgresql
+      # ... also very creepy
+      install_requires=['click', 'tornado', 'peewee[playhouse]'],
       extras_require={'test': ["nose >= 0.10.1", "pep8", "flake8"],
                       'doc': ["Sphinx == 1.2.2", "sphinx-bootstrap-theme"]},
       classifiers=classifiers

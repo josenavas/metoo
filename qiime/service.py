@@ -6,6 +6,7 @@ from tornado.web import Application
 
 from qiime.api import get_urls
 from qiime.core.registry import plugin_registry
+from qiime.db import db, initialize_db
 
 def init():
     load_plugins()
@@ -17,4 +18,9 @@ def load_plugins():
 def start_server():
     app = Application(get_urls())
     app.listen(8888)
-    IOLoop.current().start()
+    try:
+        initialize_db()
+        IOLoop.current().start()
+    finally:
+        print("Closing database connection...")
+        db.close()

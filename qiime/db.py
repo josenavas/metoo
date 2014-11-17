@@ -1,25 +1,39 @@
-import sqlite3
+import datetime
 
+import peewee as pw
+# this won't be necessary for postgresql
+# ... also very creepy
+from playhouse.sqlite_ext import PrimaryKeyAutoIncrementField
 
-def _initialize_db():
-    conn = sqlite3.connect('qiime2.db')
-    c = conn.cursor()
+db = pw.SqliteDatabase('qiime2.db')
 
-    c.execute("CREATE TABLE IF NOT EXISTS artifact "
-              "(id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, type TEXT, "
-              " data BLOB)")
+class BaseModel(pw.Model):
+    id = PrimaryKeyAutoIncrementField()
 
-    c.close()
-    conn.commit()
-    return conn
+    class Meta:
+        database = db
 
+class Study(BaseModel):
+    name = pw.CharField()
+    description = pw.TextField()
+    created = pw.DateTimeField(default=datetime.datetime.now)
 
-def get_connection():
-    return _connection
+class Type(BaseModel):
+    name = pw.CharField()
 
+class Artifact(BaseModel):
+    name = pw.CharField()
+    type = pw.ForeignKeyField(Type)
+    parent = pw.ForeignKeyField('self', null=True)
+    data = pw.BlobField(
+        null=True,
+        constraints=[
+            pw.Check('(artifact.data IS NOT NULL AND'
+                     ' artifact.parent_id IS NULL) OR '
+                     '(artifact.data IS NULL AND'
+                     ' artifact.parent_id IS NOT NULL)')])
+    study = pw.ForeignKeyField(Study, related_name='artifacts')
 
-# TODO this should be specified in a config file and we should support multiple
-# types of databases
-_connection = _initialize_db()
-
-# TODO when to close the connection?
+def initialize_db():
+    db.connect()
+    db.create_tables([Study, Type, Artifact], True)
