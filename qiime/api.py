@@ -1,7 +1,7 @@
 import qiime
 from qiime.core.registry import plugin_registry
 from qiime.core.tornadotools import route, GET, POST, PUT, DELETE, yield_urls
-from qiime.db import Study
+from qiime.db import Artifact, Study
 
 def get_urls():
     return list(yield_urls())
@@ -32,7 +32,7 @@ def method_info(method_uri):
 def list_plugins():
     return {'plugins': list(plugin_registry.get_plugin_uris())}
 
-@route('/system/plugins/(.+)', GET)
+@route('/system/plugins/([^/]+)', GET)
 def plugin_info(plugin_uri):
     plugin = plugin_registry.get_plugin(plugin_uri)
 
@@ -61,7 +61,7 @@ def create_study(request, name, description):
         'study_id': study.id
     }
 
-@route('/studies/(.+)', GET)
+@route('/studies/([^/]+)', GET)
 def study_info(study_id):
     study = Study.get(Study.id == study_id)
 
@@ -72,7 +72,7 @@ def study_info(study_id):
         'created': str(study.created)
     }
 
-@route('/studies/(.+)', PUT, params=['name', 'description'])
+@route('/studies/([^/]+)', PUT, params=['name', 'description'])
 def study_info(request, study_id, name=None, description=None):
     study = Study.get(Study.id == study_id)
     if name is not None:
@@ -83,54 +83,47 @@ def study_info(request, study_id, name=None, description=None):
 
     return {} # TODO normalize responses with status
 
-@route('/studies/(.+)', DELETE)
+@route('/studies/([^/]+)', DELETE)
 def study_info(study_id):
     study = Study.get(Study.id == study_id)
     study.delete_instance() # TODO think about cascading deletes
 
     return {} # TODO normalize responses with status
 
-#@route('/artifacts', POST, params=['name', 'artifact_type'])
-#def create_artifact(request, name, artifact_type):
-#    data = get_file_data(request)
-#    if data is None:
-#        raise ValueError("Cannot create artifact: missing uploaded file.")
-#
-#    conn = get_connection()
-#    c = conn.cursor()
-#
-#    row = (name, artifact_type, data)
-#    c.execute("INSERT INTO artifact (name, type, data) VALUES (?, ?, ?)", row)
-#    artifact_id = c.lastrowid
-#
-#    c.close()
-#    conn.commit()
-#    return {
-#        'artifact_id': artifact_id
-#    }
-#
-#@route('/artifacts/(.+)', GET)
-#def artifact_info(artifact_id):
-#    conn = get_connection()
-#    c = conn.cursor()
-#
-#    c.execute("SELECT name, type, data FROM artifact WHERE id = ?",
-#              (artifact_id,))
-#    row = c.fetchone()
-#
-#    # TODO handle the case where the artifact doesn't exist
-#
-#    c.close()
-#    conn.commit()
-#
-#    # TODO fix these names...
-#    return {
-#        'artifact_id': artifact_id,
-#        'name': row[0],
-#        'artifact_type': row[1],
-#        'bytes': len(row[2])
-#    }
-#
+@route('/studies/([^/]+)/artifacts', POST, params=['name', 'artifact_type'])
+def create_artifact(request, study_id, name, artifact_type):
+    data = get_file_data(request)
+    if data is None:
+        raise ValueError("Cannot create artifact: missing uploaded file.")
+
+    # TODO remove when using postgresql and foreign keys are actually supported
+    study = Study.get(id=study_id)
+    artifact = Artifact(name=name, type=artifact_type, data=data,
+                        study=study)
+    artifact.save()
+
+    return {
+        'artifact_id': artifact.id
+    }
+
+@route('/studies/([^/]+)/artifacts', GET)
+def list_artifacts(study_id):
+    artifacts = Study.get(id=study_id).artifacts
+
+    return {
+        'artifact_ids': [a.id for a in artifacts]
+    }
+
+@route('/studies/([^/]+)/artifacts/([^/]+)', GET, params=['export'])
+def artifact_info(study_id, artifact_id, export=None):
+    artifact = Artifact.select().where(Artifact.id == artifact_id,
+            Artifact.study == study_id).get()
+    return {
+            'arifact_id': artifact.id,
+            'name': artifact.name,
+            'type': artifact.type,
+    }
+
 #@route('/artifacts/(.+)', PUT, params=['name', 'artifact_type'])
 #def update_artifact(request, artifact_id, name=None, artifact_type=None):
 #    data = get_file_data(request)
@@ -176,33 +169,19 @@ def study_info(study_id):
 #        'status': 'success'
 #    }
 #
-#@route('/artifacts', GET)
-#def list_artifacts():
-#    conn = get_connection()
-#    c = conn.cursor()
-#
-#    artifact_ids = [row[0] for row in c.execute("SELECT id FROM artifact")]
-#
-#    c.close()
-#    conn.commit()
-#
-#    return {
-#        'artifact_ids': artifact_ids
-#    }
-#
-#def get_file_data(request):
-#    files = request.files
-#    if not files:
-#        return None
-#
-#    if len(files) > 1:
-#        raise ValueError("Need 1 named file to upload as artifact, found %d."
-#                         % len(files))
-#
-#    upload_name, file_infos = files.popitem()
-#    if len(file_infos) != 1:
-#        raise ValueError("Need exactly 1 file to upload as artifact, found "
-#                         "named file %s with %d payloads." %
-#                         (repr(upload_name), len(file_infos)))
-#    file_info = file_infos[0]
-#    return file_info['body'] # bytes
+def get_file_data(request):
+    files = request.files
+    if not files:
+        return None
+
+    if len(files) > 1:
+        raise ValueError("Need 1 named file to upload as artifact, found %d."
+                         % len(files))
+
+    upload_name, file_infos = files.popitem()
+    if len(file_infos) != 1:
+        raise ValueError("Need exactly 1 file to upload as artifact, found "
+                         "named file %s with %d payloads." %
+                         (repr(upload_name), len(file_infos)))
+    file_info = file_infos[0]
+    return file_info['body'] # bytes

@@ -23,7 +23,8 @@ class Type(BaseModel):
 
 class Artifact(BaseModel):
     name = pw.CharField()
-    type = pw.ForeignKeyField(Type)
+    #type = pw.ForeignKeyField(Type)
+    type = pw.CharField()
     parent = pw.ForeignKeyField('self', null=True)
     data = pw.BlobField(
         null=True,
