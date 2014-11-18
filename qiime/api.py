@@ -1,7 +1,7 @@
 import qiime
 from qiime.core.registry import plugin_registry
 from qiime.core.tornadotools import route, GET, POST, PUT, DELETE, yield_urls
-from qiime.db import Artifact, ArtifactProxy, Study, WorkflowTemplate
+from qiime.db import Artifact, ArtifactProxy, Study, WorkflowTemplate, Job
 
 def get_urls():
     return list(yield_urls())
@@ -142,9 +142,9 @@ def artifact_info(study_id, artifact_id, export=None):
         ArtifactProxy.study == study_id).get()
 
     return {
-            'arifact_id': proxy.id,
-            'name': proxy.name,
-            'type': proxy.artifact.type
+        'arifact_id': proxy.id,
+        'name': proxy.name,
+        'type': proxy.artifact.type
     }
 
 @route('/studies/([^/]+)/artifacts/([^/]+)', PUT, params=['name'])
@@ -169,6 +169,37 @@ def delete_artifact(study_id, artifact_id):
         raise ValueError("Wrong study")
 
     return {}
+
+@route('/studies/([^/]+)/jobs', GET, params=['status'])
+def list_jobs(study_id, status=None):
+    jobs = Study.get(id=study_id).jobs
+
+    if status is not None:
+        jobs = jobs.where(Jobs.status == status)
+
+    return {
+        'job_ids': [j.id for j in jobs]
+    }
+
+@route('/studies/([^/]+)/jobs', POST, params=['workflow_id'])
+def create_job(request, study_id, workflow_id):
+    job = Job(workflow_template=workflow_id, study=study_id)
+    job.save()
+
+    return {
+        'job_id': job.id
+    }
+
+@route('/studies/([^/]+)/jobs/([^/]+)', GET, params=['subscribe'])
+def job_info(study_id, job_id, subscribe=None): # TODO handle SSE
+    job = Job.get(id=job_id)
+
+    return {
+        'job_id': job.id,
+        'status': job.status,
+        'submitted': str(job.submitted),
+        'workflow_id': job.workflow_template.id,
+    }
 
 @route('/studies/([^/]+)/workflows', GET)
 def list_workflow_templates(study_id):
