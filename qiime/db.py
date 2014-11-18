@@ -22,19 +22,15 @@ class Type(BaseModel):
     name = pw.CharField()
 
 class Artifact(BaseModel):
-    name = pw.CharField()
-    #type = pw.ForeignKeyField(Type)
-    type = pw.CharField()
-    parent = pw.ForeignKeyField('self', null=True)
-    data = pw.BlobField(
-        null=True,
-        constraints=[
-            pw.Check('(artifact.data IS NOT NULL AND'
-                     ' artifact.parent_id IS NULL) OR '
-                     '(artifact.data IS NULL AND'
-                     ' artifact.parent_id IS NOT NULL)')])
+    type = pw.CharField() # TODO normalize
+    data = pw.BlobField()
+    study = pw.ForeignKeyField(Study)
+
+class ArtifactProxy(BaseModel):
+    name = pw.CharField() # TODO should this be normalized?
+    artifact = pw.ForeignKeyField(Artifact)
     study = pw.ForeignKeyField(Study, related_name='artifacts')
 
 def initialize_db():
     db.connect()
-    db.create_tables([Study, Type, Artifact], True)
+    db.create_tables([Study, Type, Artifact, ArtifactProxy], True)

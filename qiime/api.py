@@ -1,7 +1,7 @@
 import qiime
 from qiime.core.registry import plugin_registry
 from qiime.core.tornadotools import route, GET, POST, PUT, DELETE, yield_urls
-from qiime.db import Artifact, Study
+from qiime.db import Artifact, ArtifactProxy, Study
 
 def get_urls():
     return list(yield_urls())
@@ -98,12 +98,14 @@ def create_artifact(request, study_id, name, artifact_type):
 
     # TODO remove when using postgresql and foreign keys are actually supported
     study = Study.get(id=study_id)
-    artifact = Artifact(name=name, type=artifact_type, data=data,
-                        study=study)
+    artifact = Artifact(type=artifact_type, data=data, study=study)
     artifact.save()
 
+    artifact_proxy = ArtifactProxy(name=name, artifact=artifact, study=study)
+    artifact_proxy.save()
+
     return {
-        'artifact_id': artifact.id
+        'artifact_id': artifact_proxy.id
     }
 
 @route('/studies/([^/]+)/artifacts', GET)
@@ -114,15 +116,59 @@ def list_artifacts(study_id):
         'artifact_ids': [a.id for a in artifacts]
     }
 
+@route('/studies/([^/]+)/artifacts', PUT, params=['artifact_id'])
+def link_artifact(request, study_id, artifact_id):
+    parent_artifact = ArtifactProxy.get(id=artifact_id)
+    linked_artifacts = ArtifactProxy.select().where(
+        ArtifactProxy.artifact == parent_artifact.artifact,
+        ArtifactProxy.study == study_id)
+
+    if linked_artifacts.count() == 0:
+        linked_artifact = ArtifactProxy(artifact=parent_artifact.artifact,
+                                        name=parent_artifact.name,
+                                        study=study_id)
+        linked_artifact.save()
+    else:
+        linked_artifact = linked_artifacts.get()
+
+    return {
+        'artifact_id': linked_artifact.id
+    }
+
 @route('/studies/([^/]+)/artifacts/([^/]+)', GET, params=['export'])
 def artifact_info(study_id, artifact_id, export=None):
-    artifact = Artifact.select().where(Artifact.id == artifact_id,
-            Artifact.study == study_id).get()
+    proxy = ArtifactProxy.select().where(
+        ArtifactProxy.id == artifact_id,
+        ArtifactProxy.study == study_id).get()
+
     return {
-            'arifact_id': artifact.id,
-            'name': artifact.name,
-            'type': artifact.type,
+            'arifact_id': proxy.id,
+            'name': proxy.name,
+            'type': proxy.artifact.type
     }
+
+@route('/studies/([^/]+)/artifacts/([^/]+)', PUT, params=['name'])
+def delete_artifact(request, study_id, artifact_id, name=None):
+    proxy = ArtifactProxy.get(id=artifact_id)
+    if proxy.study.id == int(study_id): # TODO fix int hack!
+        if name is not None:
+            proxy.name = name
+
+        proxy.save()
+    else:
+        raise ValueError("Wrong study")
+
+    return {}
+
+@route('/studies/([^/]+)/artifacts/([^/]+)', DELETE)
+def delete_artifact(study_id, artifact_id):
+    proxy = ArtifactProxy.get(id=artifact_id)
+    if proxy.study.id == int(study_id): # TODO fix int hack!
+        proxy.delete_instance()
+    else:
+        raise ValueError("Wrong study")
+
+    return {}
 
 #@route('/artifacts/(.+)', PUT, params=['name', 'artifact_type'])
 #def update_artifact(request, artifact_id, name=None, artifact_type=None):
