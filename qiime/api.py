@@ -1,7 +1,7 @@
 import qiime
 from qiime.core.registry import plugin_registry
 from qiime.core.tornadotools import route, GET, POST, PUT, DELETE, yield_urls
-from qiime.db import Artifact, ArtifactProxy, Study
+from qiime.db import Artifact, ArtifactProxy, Study, WorkflowTemplate
 
 def get_urls():
     return list(yield_urls())
@@ -165,6 +165,64 @@ def delete_artifact(study_id, artifact_id):
     proxy = ArtifactProxy.get(id=artifact_id)
     if proxy.study.id == int(study_id): # TODO fix int hack!
         proxy.delete_instance()
+    else:
+        raise ValueError("Wrong study")
+
+    return {}
+
+@route('/studies/([^/]+)/workflows', GET)
+def list_workflow_templates(study_id):
+    templates = Study.get(id=study_id).workflows
+
+    return {
+        'workflow_ids': [t.id for t in templates]
+    }
+
+@route('/studies/([^/]+)/workflows', POST,
+       params=['name', 'description', 'template'])
+def create_workflow_template(request, study_id, name, description, template):
+    template = WorkflowTemplate(name=name, description=description,
+                                template=template, study=study_id)
+    template.save()
+
+    return {
+        'workflow_id': template.id
+    }
+
+@route('/studies/([^/]+)/workflows/([^/]+)', GET)
+def workflow_template_info(study_id, workflow_id):
+    template = WorkflowTemplate.get(id=workflow_id)
+
+    return {
+        'workflow_id': template.id,
+        'name': template.name,
+        'description': template.description,
+        'template': template.template
+    }
+
+@route('/studies/([^/]+)/workflows/([^/]+)', PUT,
+       params=['name', 'description', 'template'])
+def update_workflow_template(request, study_id, workflow_id, name=None,
+                             description=None, template=None):
+    workflow_template = WorkflowTemplate.get(id=workflow_id)
+
+    if name is not None:
+        workflow_template.name = name
+    if description is not None:
+        workflow_template.description = description
+    if template is not None:
+        workflow_template.template = template
+
+    workflow_template.save()
+
+    return {}
+
+@route('/studies/([^/]+)/workflows/([^/]+)', DELETE)
+def delete_workflow_template(study_id, workflow_id):
+    template = WorkflowTemplate.get(id=workflow_id)
+
+    if template.study.id == int(study_id): # TODO fix int hack!
+        template.delete_instance()
     else:
         raise ValueError("Wrong study")
 

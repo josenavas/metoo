@@ -31,6 +31,13 @@ class ArtifactProxy(BaseModel):
     artifact = pw.ForeignKeyField(Artifact)
     study = pw.ForeignKeyField(Study, related_name='artifacts')
 
+class WorkflowTemplate(BaseModel):
+    name = pw.CharField() # TODO should this be normalized?
+    description = pw.TextField()
+    template = pw.TextField()
+    study = pw.ForeignKeyField(Study, related_name='workflows')
+
 def initialize_db():
     db.connect()
-    db.create_tables([Study, Type, Artifact, ArtifactProxy], True)
+    db.create_tables([Study, Type, Artifact, ArtifactProxy, WorkflowTemplate],
+                     True)
