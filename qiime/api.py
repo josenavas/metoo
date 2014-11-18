@@ -148,7 +148,7 @@ def artifact_info(study_id, artifact_id, export=None):
     }
 
 @route('/studies/([^/]+)/artifacts/([^/]+)', PUT, params=['name'])
-def delete_artifact(request, study_id, artifact_id, name=None):
+def update_artifact(request, study_id, artifact_id, name=None):
     proxy = ArtifactProxy.get(id=artifact_id)
     if proxy.study.id == int(study_id): # TODO fix int hack!
         if name is not None:
@@ -170,51 +170,6 @@ def delete_artifact(study_id, artifact_id):
 
     return {}
 
-#@route('/artifacts/(.+)', PUT, params=['name', 'artifact_type'])
-#def update_artifact(request, artifact_id, name=None, artifact_type=None):
-#    data = get_file_data(request)
-#
-#    update_fields = []
-#    update_values = []
-#
-#    # TODO we'll need to be smarter about updating type and/or data
-#    if name is not None:
-#        update_fields.append('name = ?')
-#        update_values.append(name)
-#    if artifact_type is not None:
-#        update_fields.append('type = ?')
-#        update_values.append(artifact_type)
-#    if data is not None:
-#        update_fields.append('data = ?')
-#        update_values.append(data)
-#
-#    conn = get_connection()
-#    c = conn.cursor()
-#
-#    query = "UPDATE artifact SET %s WHERE id = ?" % ', '.join(update_fields)
-#    c.execute(query, update_values + [artifact_id])
-#
-#    c.close()
-#    conn.commit()
-#    return {
-#        'status': 'success'
-#    }
-#
-#@route('/artifacts/(.+)', DELETE)
-#def delete_artifact(artifact_id):
-#    conn = get_connection()
-#    c = conn.cursor()
-#
-#    # TODO handle the case where the artifact doesn't exist
-#    c.execute("DELETE FROM artifact WHERE id = ?", (artifact_id,))
-#
-#    c.close()
-#    conn.commit()
-#
-#    return {
-#        'status': 'success'
-#    }
-#
 def get_file_data(request):
     files = request.files
     if not files:
