@@ -175,7 +175,7 @@ def list_jobs(study_id, status=None):
     jobs = Study.get(id=study_id).jobs
 
     if status is not None:
-        jobs = jobs.where(Jobs.status == status)
+        jobs = jobs.where(Job.status == status)
 
     return {
         'job_ids': [j.id for j in jobs]
@@ -200,6 +200,27 @@ def job_info(study_id, job_id, subscribe=None): # TODO handle SSE
         'submitted': str(job.submitted),
         'workflow_id': job.workflow_template.id,
     }
+
+# TODO handle updating downstream parts of the workflow
+@route('/studies/([^/]+)/jobs/([^/]+)', PUT, params=['status'])
+def update_job(request, study_id, job_id, status=None):
+    job = Job.get(id=job_id)
+
+    # TODO do something smarter here
+    if status is not None:
+        job.status = status
+
+    job.save()
+
+    return {}
+
+@route('/studies/([^/]+)/jobs/([^/]+)', DELETE)
+def terminate_job(study_id, job_id):
+    job = Job.get(id=job_id)
+    job.status = 'terminated'
+    job.save()
+
+    return {}
 
 @route('/studies/([^/]+)/workflows', GET)
 def list_workflow_templates(study_id):
