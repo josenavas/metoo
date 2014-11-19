@@ -1,3 +1,4 @@
+import re
 from collections import defaultdict
 
 from tornado.web import RequestHandler, url
@@ -8,6 +9,8 @@ PUT = 4
 DELETE = 8
 
 _urls = defaultdict(dict)
+
+_url_param_regex = re.compile(r':[^/]+')
 
 def yield_urls():
     for key, value in _urls.items():
@@ -24,6 +27,8 @@ def yield_urls():
         yield url(key, APIHandler)
 
 def route(path, method, params=(), authenticate=True):
+    path = _to_regex_path(path)
+
     def decorator(function):
         def wrapped_function(request_handler, *args, **kwargs):
             for param_name in params:
@@ -50,3 +55,6 @@ def route(path, method, params=(), authenticate=True):
 
         return function
     return decorator
+
+def _to_regex_path(path):
+    return _url_param_regex.sub(r'([^/]+)', path)

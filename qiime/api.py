@@ -14,7 +14,7 @@ def system_info():
 def list_methods(plugin=None):
     return {'methods': [m.uri for m in plugin_registry.get_methods(plugin=plugin)]}
 
-@route('/sytem/methods/(.+)', GET)
+@route('/system/methods/:method', GET)
 def method_info(method_uri):
     method = plugin_registry.get_method(method_uri)
     return {
@@ -32,7 +32,7 @@ def method_info(method_uri):
 def list_plugins():
     return {'plugins': list(plugin_registry.get_plugin_uris())}
 
-@route('/system/plugins/([^/]+)', GET)
+@route('/system/plugins/:plugin', GET)
 def plugin_info(plugin_uri):
     plugin = plugin_registry.get_plugin(plugin_uri)
 
@@ -61,7 +61,7 @@ def create_study(request, name, description):
         'study_id': study.id
     }
 
-@route('/studies/([^/]+)', GET)
+@route('/studies/:study', GET)
 def study_info(study_id):
     study = Study.get(Study.id == study_id)
 
@@ -72,7 +72,7 @@ def study_info(study_id):
         'created': str(study.created)
     }
 
-@route('/studies/([^/]+)', PUT, params=['name', 'description'])
+@route('/studies/:study', PUT, params=['name', 'description'])
 def study_info(request, study_id, name=None, description=None):
     study = Study.get(Study.id == study_id)
     if name is not None:
@@ -83,16 +83,16 @@ def study_info(request, study_id, name=None, description=None):
 
     return {} # TODO normalize responses with status
 
-@route('/studies/([^/]+)', DELETE)
+@route('/studies/:study', DELETE)
 def study_info(study_id):
     study = Study.get(Study.id == study_id)
     study.delete_instance() # TODO think about cascading deletes
 
     return {} # TODO normalize responses with status
 
-@route('/studies/([^/]+)/artifacts', POST, params=['name', 'artifact_type'])
+@route('/studies/:study/artifacts', POST, params=['name', 'artifact_type'])
 def create_artifact(request, study_id, name, artifact_type):
-    data = get_file_data(request)
+    data = _get_file_data(request)
     if data is None:
         raise ValueError("Cannot create artifact: missing uploaded file.")
 
@@ -108,7 +108,7 @@ def create_artifact(request, study_id, name, artifact_type):
         'artifact_id': artifact_proxy.id
     }
 
-@route('/studies/([^/]+)/artifacts', GET)
+@route('/studies/:study/artifacts', GET)
 def list_artifacts(study_id):
     artifacts = Study.get(id=study_id).artifacts
 
@@ -116,7 +116,7 @@ def list_artifacts(study_id):
         'artifact_ids': [a.id for a in artifacts]
     }
 
-@route('/studies/([^/]+)/artifacts', PUT, params=['artifact_id'])
+@route('/studies/:study/artifacts', PUT, params=['artifact_id'])
 def link_artifact(request, study_id, artifact_id):
     parent_artifact = ArtifactProxy.get(id=artifact_id)
     linked_artifacts = ArtifactProxy.select().where(
@@ -135,7 +135,7 @@ def link_artifact(request, study_id, artifact_id):
         'artifact_id': linked_artifact.id
     }
 
-@route('/studies/([^/]+)/artifacts/([^/]+)', GET, params=['export'])
+@route('/studies/:study/artifacts/:artifact', GET, params=['export'])
 def artifact_info(study_id, artifact_id, export=None):
     proxy = ArtifactProxy.select().where(
         ArtifactProxy.id == artifact_id,
@@ -147,7 +147,7 @@ def artifact_info(study_id, artifact_id, export=None):
         'type': proxy.artifact.type
     }
 
-@route('/studies/([^/]+)/artifacts/([^/]+)', PUT, params=['name'])
+@route('/studies/:study/artifacts/:artifact', PUT, params=['name'])
 def update_artifact(request, study_id, artifact_id, name=None):
     proxy = ArtifactProxy.get(id=artifact_id)
     if proxy.study.id == int(study_id): # TODO fix int hack!
@@ -160,7 +160,7 @@ def update_artifact(request, study_id, artifact_id, name=None):
 
     return {}
 
-@route('/studies/([^/]+)/artifacts/([^/]+)', DELETE)
+@route('/studies/:study/artifacts/:artifact', DELETE)
 def delete_artifact(study_id, artifact_id):
     proxy = ArtifactProxy.get(id=artifact_id)
     if proxy.study.id == int(study_id): # TODO fix int hack!
@@ -170,7 +170,7 @@ def delete_artifact(study_id, artifact_id):
 
     return {}
 
-@route('/studies/([^/]+)/jobs', GET, params=['status'])
+@route('/studies/:study/jobs', GET, params=['status'])
 def list_jobs(study_id, status=None):
     jobs = Study.get(id=study_id).jobs
 
@@ -181,7 +181,7 @@ def list_jobs(study_id, status=None):
         'job_ids': [j.id for j in jobs]
     }
 
-@route('/studies/([^/]+)/jobs', POST, params=['workflow_id'])
+@route('/studies/:study/jobs', POST, params=['workflow_id'])
 def create_job(request, study_id, workflow_id):
     job = Job(workflow_template=workflow_id, study=study_id)
     job.save()
@@ -190,7 +190,7 @@ def create_job(request, study_id, workflow_id):
         'job_id': job.id
     }
 
-@route('/studies/([^/]+)/jobs/([^/]+)', GET, params=['subscribe'])
+@route('/studies/:study/jobs/:job', GET, params=['subscribe'])
 def job_info(study_id, job_id, subscribe=None): # TODO handle SSE
     job = Job.get(id=job_id)
 
@@ -202,7 +202,7 @@ def job_info(study_id, job_id, subscribe=None): # TODO handle SSE
     }
 
 # TODO handle updating downstream parts of the workflow
-@route('/studies/([^/]+)/jobs/([^/]+)', PUT, params=['status'])
+@route('/studies/:study/jobs/:job', PUT, params=['status'])
 def update_job(request, study_id, job_id, status=None):
     job = Job.get(id=job_id)
 
@@ -214,7 +214,7 @@ def update_job(request, study_id, job_id, status=None):
 
     return {}
 
-@route('/studies/([^/]+)/jobs/([^/]+)', DELETE)
+@route('/studies/:study/jobs/:job', DELETE)
 def terminate_job(study_id, job_id):
     job = Job.get(id=job_id)
     job.status = 'terminated'
@@ -222,7 +222,7 @@ def terminate_job(study_id, job_id):
 
     return {}
 
-@route('/studies/([^/]+)/workflows', GET)
+@route('/studies/:study/workflows', GET)
 def list_workflow_templates(study_id):
     templates = Study.get(id=study_id).workflows
 
@@ -230,7 +230,7 @@ def list_workflow_templates(study_id):
         'workflow_ids': [t.id for t in templates]
     }
 
-@route('/studies/([^/]+)/workflows', POST,
+@route('/studies/:study/workflows', POST,
        params=['name', 'description', 'template'])
 def create_workflow_template(request, study_id, name, description, template):
     template = WorkflowTemplate(name=name, description=description,
@@ -241,7 +241,7 @@ def create_workflow_template(request, study_id, name, description, template):
         'workflow_id': template.id
     }
 
-@route('/studies/([^/]+)/workflows/([^/]+)', GET)
+@route('/studies/:study/workflows/:workflow', GET)
 def workflow_template_info(study_id, workflow_id):
     template = WorkflowTemplate.get(id=workflow_id)
 
@@ -252,7 +252,7 @@ def workflow_template_info(study_id, workflow_id):
         'template': template.template
     }
 
-@route('/studies/([^/]+)/workflows/([^/]+)', PUT,
+@route('/studies/:study/workflows/:workflow', PUT,
        params=['name', 'description', 'template'])
 def update_workflow_template(request, study_id, workflow_id, name=None,
                              description=None, template=None):
@@ -269,7 +269,7 @@ def update_workflow_template(request, study_id, workflow_id, name=None,
 
     return {}
 
-@route('/studies/([^/]+)/workflows/([^/]+)', DELETE)
+@route('/studies/:study/workflows/:workflow', DELETE)
 def delete_workflow_template(study_id, workflow_id):
     template = WorkflowTemplate.get(id=workflow_id)
 
@@ -280,7 +280,7 @@ def delete_workflow_template(study_id, workflow_id):
 
     return {}
 
-def get_file_data(request):
+def _get_file_data(request):
     files = request.files
     if not files:
         return None
