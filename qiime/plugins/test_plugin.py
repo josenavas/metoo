@@ -9,7 +9,12 @@ def some_method(a: int, b: str) -> dict:
 @qiime.register_method("other method")
 def something_else(a: int, b: str) -> dict:
     pass
-#
+
+@qiime.register_type("distance matrix")
+class DistanceMatrix(object):
+    """Symmetric, hollow 2-D matrix of distances."""
+    pass
+
 # @qiime.register_workflow("some workflow")
 # def some_workflow(Step,
 #                   dm: DistanceMatrix,

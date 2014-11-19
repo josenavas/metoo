@@ -1,4 +1,3 @@
-
 class PluginRegistry(object):
     def __init__(self):
         self._plugins = {}
@@ -9,6 +8,9 @@ class PluginRegistry(object):
     def get_plugin_uris(self):
         for plugin in self._plugins.values():
             yield plugin.uri
+
+    def get_plugin(self, uri):
+        return self._plugins[uri]
 
     def get_methods(self, plugin=None):
         if plugin is None:
@@ -22,7 +24,17 @@ class PluginRegistry(object):
     def get_method(self, uri):
         return self.get_plugin('.'.join(uri.split('.')[:-2])).get_method(uri)
 
-    def get_plugin(self, uri):
-        return self._plugins[uri]
+    def get_types(self, plugin=None):
+        if plugin is None:
+            plugins = self._plugins.keys()
+        else:
+            plugins = [plugin]
+        for uri in plugins:
+            for type_ in self.get_plugin(uri).get_types().values():
+                yield type_
+
+    def get_type(self, uri):
+        # TODO fix the plugin uri extraction hack (here and above)
+        return self.get_plugin('.'.join(uri.split('.')[:-2])).get_type(uri)
 
 plugin_registry = PluginRegistry()

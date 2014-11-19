@@ -47,6 +47,21 @@ def plugin_info(plugin_uri):
 
     return plugin_info
 
+@route('/system/types', GET, params=['plugin'])
+def list_types(plugin=None):
+    return {'types': [t.uri for t in plugin_registry.get_types(plugin=plugin)]}
+
+@route('/system/types/:type', GET)
+def type_info(type_uri):
+    type_ = plugin_registry.get_type(type_uri)
+
+    return {
+        'uri': type_.uri,
+        'name': type_.name,
+        'description': type_.description,
+        'type_class': type_.type_class
+    }
+
 @route('/studies', GET)
 def list_studies():
     return {

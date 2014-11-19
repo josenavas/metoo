@@ -25,6 +25,21 @@ List of plugins.
 ### GET
 Info about the plugin, e.g., author, description, if its an official plugin, etc.
 
+## /system/types
+
+### GET
+List of registered types. Query parameter ``plugin`` will limit results to the specified plugin.
+
+## /system/types/relations
+
+### GET
+Info about the relationships between types (type system hierarchy).
+
+## /system/types/:type
+
+### GET
+Info about the registered type, e.g., name, description, type class, etc.
+
 ## /studies
 
 ### GET

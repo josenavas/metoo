@@ -1,4 +1,5 @@
 from .method import Method
+from .type import Type
 
 class Plugin(object):
     def __init__(self, name, version, author, description):
@@ -8,6 +9,7 @@ class Plugin(object):
         self.author = author
         self.description = description
         self._methods = {}
+        self._types = {}
 
     def register_method(self, name):
         def decorator(function):
@@ -24,6 +26,16 @@ class Plugin(object):
     def register_workflow(self, name):
         pass
 
+    def register_type(self, name):
+        def decorator(cls):
+            uri = "%s.types.%s" % (self.uri, cls.__name__)
+            if self.has_type(uri):
+                raise Exception()
+
+            self._types[uri] = Type(uri, name, cls.__doc__, 'artifact', cls)
+            return cls
+        return decorator
+
     def has_method(self, uri):
         return uri in self._methods
 
@@ -35,3 +47,15 @@ class Plugin(object):
 
     def get_methods(self):
         return self._methods.copy()
+
+    def has_type(self, uri):
+        return uri in self._types
+
+    def get_type(self, uri):
+        if self.has_type(uri):
+            return self._types[uri]
+        else:
+            raise Exception()
+
+    def get_types(self):
+        return self._types.copy()

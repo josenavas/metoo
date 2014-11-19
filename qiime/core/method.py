@@ -7,7 +7,6 @@ class Method(object):
         self.annotations = annotations
         self.docstring = docstring
 
-
         spec = inspect.getfullargspec(function)
         if spec.defaults:
             kwarg_start = -len(spec.defaults)
