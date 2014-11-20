@@ -5,6 +5,8 @@ import peewee as pw
 # ... also very creepy
 from playhouse.sqlite_ext import PrimaryKeyAutoIncrementField
 
+from qiime.core.registry import plugin_registry
+
 db = pw.SqliteDatabase('qiime2.db')
 
 class BaseModel(pw.Model):
@@ -19,11 +21,11 @@ class Study(BaseModel):
     created = pw.DateTimeField(default=datetime.datetime.now)
 
 class Type(BaseModel):
-    name = pw.CharField()
+    uri = pw.CharField(unique=True) # TODO should this be TextField? we don't know how long these uris might be in practice
 
 class Artifact(BaseModel):
-    type = pw.CharField() # TODO normalize
     data = pw.BlobField()
+    type = pw.ForeignKeyField(Type)
     study = pw.ForeignKeyField(Study)
 
 class ArtifactProxy(BaseModel):
@@ -50,3 +52,9 @@ def initialize_db():
     db.connect()
     db.create_tables(
         [Study, Type, Artifact, ArtifactProxy, WorkflowTemplate, Job], True)
+    _populate_type_table()
+
+def _populate_type_table():
+    # TODO when to repopulate? currently reqires db to be wiped each time
+    for type_ in plugin_registry.get_types():
+        Type(uri=type_.uri).save()
