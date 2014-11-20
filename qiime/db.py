@@ -41,9 +41,9 @@ class ArtifactProxy(BaseModel):
     def uri(self):
         return '/studies/%d/artifacts/%d' % (self.study.id, self.id)
 
-# TODO a study can have many workflow templates associated with it, but can a
-# workflow template be associated with many studies?
-class WorkflowTemplate(BaseModel):
+# TODO a study can have many workflows associated with it, but can a workflow
+# be associated with many studies?
+class Workflow(BaseModel):
     name = pw.CharField() # TODO should this be normalized?
     description = pw.TextField()
     template = pw.TextField()
@@ -53,12 +53,12 @@ class WorkflowTemplate(BaseModel):
     def uri(self):
         return '/studies/%d/workflows/%d' % (self.study.id, self.id)
 
-# TODO how to handle inputs to the workflow template?
+# TODO how to handle inputs to the workflow?
 class Job(BaseModel):
     status = pw.CharField(default='submitted') # TODO normalize
     submitted = pw.DateTimeField(default=datetime.datetime.now)
     completed = pw.DateTimeField(null=True)
-    workflow_template = pw.ForeignKeyField(WorkflowTemplate)
+    workflow = pw.ForeignKeyField(Workflow)
     study = pw.ForeignKeyField(Study, related_name='jobs')
 
     @property
@@ -83,8 +83,8 @@ class JobInputArtifact(BaseModel):
 def initialize_db():
     db.connect()
     db.create_tables(
-        [Study, Artifact, ArtifactProxy, ArtifactType, WorkflowTemplate,
-         Job, JobInputParameter, JobInputArtifact], True)
+        [Study, Artifact, ArtifactProxy, ArtifactType, Workflow, Job,
+         JobInputParameter, JobInputArtifact], True)
     _populate_artifact_type_table()
 
 def _populate_artifact_type_table():

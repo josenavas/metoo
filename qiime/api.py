@@ -4,7 +4,7 @@ from urllib.parse import urlparse
 import qiime
 from qiime.core.registry import plugin_registry
 from qiime.core.tornadotools import route, GET, POST, PUT, DELETE, yield_urls
-from qiime.db import Artifact, ArtifactProxy, ArtifactType, Study, WorkflowTemplate, Job
+from qiime.db import Artifact, ArtifactProxy, ArtifactType, Study, Workflow, Job
 
 def get_urls():
     return list(yield_urls())
@@ -161,9 +161,9 @@ def list_artifacts(study_id):
         'uris': [a.uri for a in artifacts]
     }
 
-@route('/studies/:study/artifacts', PUT, params=['artifact_uri'])
-def link_artifact(request, study_id, artifact_uri):
-    artifact_id = _extract_artifact_id(artifact_uri)
+@route('/studies/:study/artifacts', PUT, params=['artifact'])
+def link_artifact(request, study_id, artifact):
+    artifact_id = _extract_artifact_id(artifact)
     parent_artifact = ArtifactProxy.get(id=artifact_id)
     linked_artifacts = ArtifactProxy.select().where(
         ArtifactProxy.artifact == parent_artifact.artifact,
@@ -230,23 +230,28 @@ def list_jobs(study_id, status=None):
         'uris': [j.uri for j in jobs]
     }
 
-#@route('/studies/:study/jobs', POST, params=['workflow_id', 'method'])
-#def create_job(request, study_id, workflow_id=None, method=None):
-#    if workflow_id is None and method is None:
-#        raise Exception()
-#    if method is not None and workflow_id is not None:
-#        raise Exception()
-#
-#    if workflow_id is not None:
-#        raise NotImplementedError()
-#
-#    if method is not None:
-#        job = Job(workflow_template=workflow_id, study=study_id)
-#        job.save()
-#
-#    return {
-#        'job_id': job.id
-#    }
+@route('/studies/:study/jobs', POST, params=['workflow', 'method'])
+def create_job(request, study_id, workflow=None, method=None):
+    if workflow is None and method is None:
+        raise Exception()
+    if method is not None and workflow is not None:
+        raise Exception()
+
+    if workflow is not None:
+        raise NotImplementedError()
+
+    if method is not None:
+        template, name, desc = _generate_workflow_template_from_method(method)
+        workflow = Workflow(study=study_id, template=template, name=name,
+                            description=desc)
+        workflow.save()
+
+        job = Job(workflow=workflow, study=study_id)
+        job.save()
+
+    return {
+        'uri': job.uri
+    }
 
 @route('/studies/:study/jobs/:job', GET, params=['subscribe'])
 def job_info(study_id, job_id, subscribe=None): # TODO handle SSE
@@ -256,7 +261,7 @@ def job_info(study_id, job_id, subscribe=None): # TODO handle SSE
         'uri': job.uri,
         'status': job.status,
         'submitted': str(job.submitted),
-        'workflow': job.workflow_template.uri,
+        'workflow': job.workflow.uri,
     }
 
 # TODO handle updating downstream parts of the workflow
@@ -281,58 +286,58 @@ def terminate_job(study_id, job_id):
     return {}
 
 @route('/studies/:study/workflows', GET)
-def list_workflow_templates(study_id):
-    templates = Study.get(id=study_id).workflows
+def list_workflows(study_id):
+    workflows = Study.get(id=study_id).workflows
 
     return {
-        'uris': [t.uri for t in templates]
+        'uris': [w.uri for w in workflows]
     }
 
 @route('/studies/:study/workflows', POST,
        params=['name', 'description', 'template'])
-def create_workflow_template(request, study_id, name, description, template):
-    template = WorkflowTemplate(name=name, description=description,
-                                template=template, study=study_id)
-    template.save()
+def create_workflow(request, study_id, name, description, template):
+    workflow = Workflow(name=name, description=description, template=template,
+                        study=study_id)
+    workflow.save()
 
     return {
-        'uri': template.uri
+        'uri': workflow.uri
     }
 
 @route('/studies/:study/workflows/:workflow', GET)
-def workflow_template_info(study_id, workflow_id):
-    template = WorkflowTemplate.get(id=workflow_id)
+def workflow_info(study_id, workflow_id):
+    workflow = Workflow.get(id=workflow_id)
 
     return {
-        'uri': template.uri,
-        'name': template.name,
-        'description': template.description,
-        'template': template.template
+        'uri': workflow.uri,
+        'name': workflow.name,
+        'description': workflow.description,
+        'template': workflow.template
     }
 
 @route('/studies/:study/workflows/:workflow', PUT,
        params=['name', 'description', 'template'])
-def update_workflow_template(request, study_id, workflow_id, name=None,
-                             description=None, template=None):
-    workflow_template = WorkflowTemplate.get(id=workflow_id)
+def update_workflow(request, study_id, workflow_id, name=None,
+                    description=None, template=None):
+    workflow = Workflow.get(id=workflow_id)
 
     if name is not None:
-        workflow_template.name = name
+        workflow.name = name
     if description is not None:
-        workflow_template.description = description
+        workflow.description = description
     if template is not None:
-        workflow_template.template = template
+        workflow.template = template
 
-    workflow_template.save()
+    workflow.save()
 
     return {}
 
 @route('/studies/:study/workflows/:workflow', DELETE)
-def delete_workflow_template(study_id, workflow_id):
-    template = WorkflowTemplate.get(id=workflow_id)
+def delete_workflow(study_id, workflow_id):
+    workflow = Workflow.get(id=workflow_id)
 
-    if template.study.id == int(study_id): # TODO fix int hack!
-        template.delete_instance()
+    if workflow.study.id == int(study_id): # TODO fix int hack!
+        workflow.delete_instance()
     else:
         raise ValueError("Wrong study")
 
@@ -379,3 +384,7 @@ def _get_file_data(request):
 
 def _extract_artifact_id(artifact_uri):
     return int(urlparse(artifact_uri).path.split('/')[-1])
+
+def _generate_workflow_template_from_method(method_uri):
+    # TODO finish me! :please:
+    return method_uri, method_uri, method_uri
