@@ -20,6 +20,10 @@ class Study(BaseModel):
     description = pw.TextField()
     created = pw.DateTimeField(default=datetime.datetime.now)
 
+    @property
+    def uri(self):
+        return '/studies/%d' % self.id
+
 class ArtifactType(BaseModel):
     uri = pw.CharField(unique=True) # TODO should this be TextField? we don't know how long these uris might be in practice
 
@@ -33,6 +37,10 @@ class ArtifactProxy(BaseModel):
     artifact = pw.ForeignKeyField(Artifact)
     study = pw.ForeignKeyField(Study, related_name='artifacts')
 
+    @property
+    def uri(self):
+        return '/studies/%d/artifacts/%d' % (self.study.id, self.id)
+
 # TODO a study can have many workflow templates associated with it, but can a
 # workflow template be associated with many studies?
 class WorkflowTemplate(BaseModel):
@@ -41,6 +49,10 @@ class WorkflowTemplate(BaseModel):
     template = pw.TextField()
     study = pw.ForeignKeyField(Study, related_name='workflows', null=True)
 
+    @property
+    def uri(self):
+        return '/studies/%d/workflows/%d' % (self.study.id, self.id)
+
 # TODO how to handle inputs to the workflow template?
 class Job(BaseModel):
     status = pw.CharField(default='submitted') # TODO normalize
@@ -48,6 +60,10 @@ class Job(BaseModel):
     completed = pw.DateTimeField(null=True)
     workflow_template = pw.ForeignKeyField(WorkflowTemplate)
     study = pw.ForeignKeyField(Study, related_name='jobs')
+
+    @property
+    def uri(self):
+        return '/studies/%d/jobs/%d' % (self.study.id, self.id)
 
 class JobInputParameter(BaseModel):
     name = pw.CharField()

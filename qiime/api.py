@@ -1,4 +1,5 @@
 import inspect
+from urllib.parse import urlparse
 
 import qiime
 from qiime.core.registry import plugin_registry
@@ -93,7 +94,7 @@ def type_info(plugin_name, type_name):
 @route('/studies', GET)
 def list_studies():
     return {
-        'studies': [study.id for study in Study.select()]
+        'uris': [study.uri for study in Study.select()]
     }
 
 @route('/studies', POST, params=['name', 'description'])
@@ -101,7 +102,7 @@ def create_study(request, name, description):
     study = Study(name=name, description=description)
     study.save()
     return {
-        'study_id': study.id
+        'uri': study.uri
     }
 
 @route('/studies/:study', GET)
@@ -109,7 +110,7 @@ def study_info(study_id):
     study = Study.get(Study.id == study_id)
 
     return {
-        'study_id': study.id,
+        'uri': study.uri,
         'name': study.name,
         'description': study.description,
         'created': str(study.created)
@@ -149,7 +150,7 @@ def create_artifact(request, study_id, name, artifact_type):
     artifact_proxy.save()
 
     return {
-        'artifact_id': artifact_proxy.id
+        'uri': artifact_proxy.uri
     }
 
 @route('/studies/:study/artifacts', GET)
@@ -157,11 +158,12 @@ def list_artifacts(study_id):
     artifacts = Study.get(id=study_id).artifacts
 
     return {
-        'artifact_ids': [a.id for a in artifacts]
+        'uris': [a.uri for a in artifacts]
     }
 
-@route('/studies/:study/artifacts', PUT, params=['artifact_id'])
-def link_artifact(request, study_id, artifact_id):
+@route('/studies/:study/artifacts', PUT, params=['artifact_uri'])
+def link_artifact(request, study_id, artifact_uri):
+    artifact_id = _extract_artifact_id(artifact_uri)
     parent_artifact = ArtifactProxy.get(id=artifact_id)
     linked_artifacts = ArtifactProxy.select().where(
         ArtifactProxy.artifact == parent_artifact.artifact,
@@ -176,17 +178,20 @@ def link_artifact(request, study_id, artifact_id):
         linked_artifact = linked_artifacts.get()
 
     return {
-        'artifact_id': linked_artifact.id
+        'uri': linked_artifact.uri
     }
 
 @route('/studies/:study/artifacts/:artifact', GET, params=['export'])
 def artifact_info(study_id, artifact_id, export=None):
+    if export is not None:
+        raise NotImplementedError()
+
     proxy = ArtifactProxy.select().where(
         ArtifactProxy.id == artifact_id,
         ArtifactProxy.study == study_id).get()
 
     return {
-        'arifact_id': proxy.id,
+        'uri': proxy.uri,
         'name': proxy.name,
         'type': proxy.artifact.type.uri
     }
@@ -222,7 +227,7 @@ def list_jobs(study_id, status=None):
         jobs = jobs.where(Job.status == status)
 
     return {
-        'job_ids': [j.id for j in jobs]
+        'uris': [j.uri for j in jobs]
     }
 
 #@route('/studies/:study/jobs', POST, params=['workflow_id', 'method'])
@@ -248,10 +253,10 @@ def job_info(study_id, job_id, subscribe=None): # TODO handle SSE
     job = Job.get(id=job_id)
 
     return {
-        'job_id': job.id,
+        'uri': job.uri,
         'status': job.status,
         'submitted': str(job.submitted),
-        'workflow_id': job.workflow_template.id,
+        'workflow': job.workflow_template.uri,
     }
 
 # TODO handle updating downstream parts of the workflow
@@ -280,7 +285,7 @@ def list_workflow_templates(study_id):
     templates = Study.get(id=study_id).workflows
 
     return {
-        'workflow_ids': [t.id for t in templates]
+        'uris': [t.uri for t in templates]
     }
 
 @route('/studies/:study/workflows', POST,
@@ -291,7 +296,7 @@ def create_workflow_template(request, study_id, name, description, template):
     template.save()
 
     return {
-        'workflow_id': template.id
+        'uri': template.uri
     }
 
 @route('/studies/:study/workflows/:workflow', GET)
@@ -299,7 +304,7 @@ def workflow_template_info(study_id, workflow_id):
     template = WorkflowTemplate.get(id=workflow_id)
 
     return {
-        'workflow_id': template.id,
+        'uri': template.uri,
         'name': template.name,
         'description': template.description,
         'template': template.template
@@ -371,3 +376,6 @@ def _get_file_data(request):
                          (repr(upload_name), len(file_infos)))
     file_info = file_infos[0]
     return file_info['body'] # bytes
+
+def _extract_artifact_id(artifact_uri):
+    return int(urlparse(artifact_uri).path.split('/')[-1])
