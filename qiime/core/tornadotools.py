@@ -10,7 +10,7 @@ DELETE = 8
 
 _urls = defaultdict(dict)
 
-_url_param_regex = re.compile(r':[^/]+')
+_url_param_regex = re.compile(r'\:[^/]+')
 
 def yield_urls():
     for key, value in _urls.items():
@@ -32,7 +32,7 @@ def route(path, method, params=(), authenticate=True):
     def decorator(function):
         def wrapped_function(request_handler, *args, **kwargs):
             for param_name in params:
-                kwargs[param_name] = request_handler.get_argument(param_name, default=None)
+                kwargs[param_name] = request_handler.get_argument(param_name, default=None) # TODO only default parameters of None are supported
             if authenticate:
                 # TODO: Authenticate here
                 pass

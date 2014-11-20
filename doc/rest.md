@@ -28,12 +28,7 @@ Info about the plugin, e.g., author, description, if its an official plugin, etc
 ## /system/types
 
 ### GET
-List of registered types. Query parameter ``plugin`` will limit results to the specified plugin.
-
-## /system/types/relations
-
-### GET
-Info about the relationships between types (type system hierarchy).
+List of registered types. Query parameter ``plugin`` will limit results to the specified plugin. Query parameter ``format`` will specify the structure of the output format: ``list`` will be a flat list of type URIs and ``tree`` will be a JSON tree indicating the hierarchical relationship among the types.
 
 ## /system/types/:type
 

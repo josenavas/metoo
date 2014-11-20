@@ -15,6 +15,39 @@ class DistanceMatrix(object):
     """Symmetric, hollow 2-D matrix of distances."""
     pass
 
+@qiime.register_type("unifrac distance matrix")
+class UniFracDistanceMatrix(DistanceMatrix):
+    """..."""
+    pass
+
+@qiime.register_type("bray-curtis distance matrix")
+class BrayCurtisDistanceMatrix(DistanceMatrix):
+    """---"""
+    pass
+
+@qiime.register_type("contingency table")
+class ContingencyTable(object):
+    """2-D table of observation counts within each sample."""
+    pass
+
+@qiime.register_type("otu table")
+class OTUTable(ContingencyTable):
+    """OTU table"""
+    pass
+
+# TODO this hierarchy probably isn't the best way to handle this, but useful
+# for testing multiple inheritance
+
+@qiime.register_type("rarefied table")
+class RarefiedTable(object):
+    """Rarefied table"""
+    pass
+
+@qiime.register_type("rarefied otu table")
+class RarefiedOTUTable(OTUTable, RarefiedTable):
+    """Rarefied OTU table"""
+    pass
+
 # @qiime.register_workflow("some workflow")
 # def some_workflow(Step,
 #                   dm: DistanceMatrix,

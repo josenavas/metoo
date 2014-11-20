@@ -1,3 +1,5 @@
+import inspect
+
 import qiime
 from qiime.core.registry import plugin_registry
 from qiime.core.tornadotools import route, GET, POST, PUT, DELETE, yield_urls
@@ -47,9 +49,49 @@ def plugin_info(plugin_uri):
 
     return plugin_info
 
-@route('/system/types', GET, params=['plugin'])
-def list_types(plugin=None):
-    return {'types': [t.uri for t in plugin_registry.get_types(plugin=plugin)]}
+@route('/system/types', GET, params=['plugin', 'format'])
+def list_types(plugin=None, format=None):
+    if format is None:
+        format = 'list'
+
+    types = plugin_registry.get_types(plugin=plugin)
+
+    if format == 'list':
+        return {
+            'types': [t.uri for t in types]
+        }
+    elif format == 'tree':
+        classes = []
+        for type_ in types:
+            cls = type_.cls
+            cls.__uri = type_.uri # TODO this is very much hacked
+            classes.append(cls)
+
+        cls_tree = inspect.getclasstree(classes)
+        uri_tree = {}
+        _list_tree_to_dict_tree(cls_tree, uri_tree)
+        return uri_tree
+    else:
+        raise ValueError("Unrecognized format: %r" % format)
+
+def _list_tree_to_dict_tree(list_tree, dict_tree):
+    parent = None
+    for entry in list_tree:
+        if isinstance(entry, tuple):
+            cls = entry[0]
+            if hasattr(cls, '__uri'):
+                uri = cls.__uri
+            else:
+                uri = cls.__name__
+            parent = {}
+            dict_tree[uri] = parent
+        else:
+            # list of subclass entries
+            if parent is None:
+                # shouldn't be possible to get here...
+                raise ValueError("Subclass entries were not preceded by a "
+                                 "parent class.")
+            _list_tree_to_dict_tree(entry, parent)
 
 @route('/system/types/:type', GET)
 def type_info(type_uri):
