@@ -1,3 +1,4 @@
+from qiime.core.util import is_uri, get_feature_from_uri
 from qiime.types import Artifact
 from .method import Method
 from .type import Type
@@ -45,9 +46,13 @@ class Plugin(object):
         return decorator
 
     def has_method(self, name):
+        if is_uri(name, 'methods'):
+            name = get_feature_from_uri(name, 'methods')
         return name in self._methods
 
     def get_method(self, name):
+        if is_uri(name, 'methods'):
+            name = get_feature_from_uri(name, 'methods')
         if self.has_method(name):
             return self._methods[name]
         else:
@@ -57,9 +62,13 @@ class Plugin(object):
         return self._methods.copy()
 
     def has_type(self, name):
+        if is_uri(name, 'types'):
+            name = get_feature_from_uri(name, 'types')
         return name in self._types
 
     def get_type(self, name):
+        if is_uri(name, 'types'):
+            name = get_feature_from_uri(name, 'types')
         if self.has_type(name):
             return self._types[name]
         else:
