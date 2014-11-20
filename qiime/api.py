@@ -64,34 +64,13 @@ def list_types(plugin=None, format=None):
         classes = []
         for type_ in types:
             cls = type_.cls
-            cls.__uri = type_.uri # TODO this is very much hacked
+            cls.__uri = type_.uri # TODO this is very much hacked... maybe use a cls -> uri lookup?
             classes.append(cls)
 
         cls_tree = inspect.getclasstree(classes)
-        uri_tree = {}
-        _list_tree_to_dict_tree(cls_tree, uri_tree)
-        return uri_tree
+        return _list_tree_to_dict_tree(cls_tree)
     else:
         raise ValueError("Unrecognized format: %r" % format)
-
-def _list_tree_to_dict_tree(list_tree, dict_tree):
-    parent = None
-    for entry in list_tree:
-        if isinstance(entry, tuple):
-            cls = entry[0]
-            if hasattr(cls, '__uri'):
-                uri = cls.__uri
-            else:
-                uri = cls.__name__
-            parent = {}
-            dict_tree[uri] = parent
-        else:
-            # list of subclass entries
-            if parent is None:
-                # shouldn't be possible to get here...
-                raise ValueError("Subclass entries were not preceded by a "
-                                 "parent class.")
-            _list_tree_to_dict_tree(entry, parent)
 
 @route('/system/types/:type', GET)
 def type_info(type_uri):
@@ -336,6 +315,28 @@ def delete_workflow_template(study_id, workflow_id):
         raise ValueError("Wrong study")
 
     return {}
+
+def _list_tree_to_dict_tree(list_tree):
+    tree = {}
+    uri = None
+    for entry in list_tree:
+        if isinstance(entry, tuple):
+            cls = entry[0]
+            if hasattr(cls, '__uri'):
+                uri = cls.__uri
+            else:
+                uri = cls.__name__
+            subtree = {}
+        else:
+            # list of subclass entries
+            subtree = _list_tree_to_dict_tree(entry)
+
+        if uri is None:
+            # shouldn't be possible to get here...
+            raise ValueError("Subclass entries were not preceded by a "
+                             "superclass entry.")
+        tree[uri] = subtree
+    return tree
 
 def _get_file_data(request):
     files = request.files
