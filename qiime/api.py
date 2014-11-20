@@ -3,7 +3,7 @@ import inspect
 import qiime
 from qiime.core.registry import plugin_registry
 from qiime.core.tornadotools import route, GET, POST, PUT, DELETE, yield_urls
-from qiime.db import Artifact, ArtifactProxy, Study, Type, WorkflowTemplate, Job
+from qiime.db import Artifact, ArtifactProxy, ArtifactType, Study, WorkflowTemplate, Job
 
 def get_urls():
     return list(yield_urls())
@@ -134,7 +134,7 @@ def create_artifact(request, study_id, name, artifact_type):
 
     # TODO remove when using postgresql and foreign keys are actually supported
     study = Study.get(id=study_id)
-    type_ = Type.get(uri=artifact_type)
+    type_ = ArtifactType.get(uri=artifact_type)
     artifact = Artifact(type=type_, data=data, study=study)
     artifact.save()
 

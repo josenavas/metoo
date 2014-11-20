@@ -20,12 +20,12 @@ class Study(BaseModel):
     description = pw.TextField()
     created = pw.DateTimeField(default=datetime.datetime.now)
 
-class Type(BaseModel):
+class ArtifactType(BaseModel):
     uri = pw.CharField(unique=True) # TODO should this be TextField? we don't know how long these uris might be in practice
 
 class Artifact(BaseModel):
     data = pw.BlobField()
-    type = pw.ForeignKeyField(Type)
+    type = pw.ForeignKeyField(ArtifactType)
     study = pw.ForeignKeyField(Study)
 
 class ArtifactProxy(BaseModel):
@@ -51,10 +51,11 @@ class Job(BaseModel):
 def initialize_db():
     db.connect()
     db.create_tables(
-        [Study, Type, Artifact, ArtifactProxy, WorkflowTemplate, Job], True)
-    _populate_type_table()
+        [Study, Artifact, ArtifactProxy, ArtifactType, WorkflowTemplate,
+         Job], True)
+    _populate_artifact_type_table()
 
-def _populate_type_table():
+def _populate_artifact_type_table():
     # TODO when to repopulate? currently reqires db to be wiped each time
     for type_ in plugin_registry.get_types():
-        Type(uri=type_.uri).save()
+        ArtifactType(uri=type_.uri).save()
