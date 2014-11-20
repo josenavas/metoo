@@ -5,16 +5,6 @@
 ### GET
 QIIME server version
 
-## /system/methods
-
-### GET
-List of methods. Default is all methods across all plugins. Query parameter ``plugin`` will limit results to the specified plugin.
-
-## /system/methods/:method
-
-### GET
-Information about the method, e.g., name, description, annotations, etc.
-
 ## /system/plugins
 
 ### GET
@@ -25,12 +15,32 @@ List of plugins.
 ### GET
 Info about the plugin, e.g., author, description, if its an official plugin, etc.
 
-## /system/types
+## /system/plugins/all/methods
 
 ### GET
-List of registered types. Query parameter ``plugin`` will limit results to the specified plugin. Query parameter ``format`` will specify the structure of the output format: ``list`` will be a flat list of type URIs and ``tree`` will be a JSON tree indicating the hierarchical relationship among the types.
+List all methods across all plugins.
 
-## /system/types/:type
+## /system/plugins/:plugin/methods
+
+### GET
+List of methods in the specified plugin.
+
+## /system/plugins/:plugin/methods/:method
+
+### GET
+Information about the method, e.g., name, description, annotations, etc.
+
+## /system/plugins/all/types
+
+### GET
+List of all registered types across all plugins. Query parameter ``format`` will specify the structure of the output format: ``list`` will be a flat list of type URIs and ``tree`` will be a JSON tree indicating the hierarchical relationship among the types.
+
+## /system/plugins/:plugin/types
+
+### GET
+List of registered types in the specified plugin.
+
+## /system/plugins/:plugin/types/:type
 
 ### GET
 Info about the registered type, e.g., name, description, type class, etc.

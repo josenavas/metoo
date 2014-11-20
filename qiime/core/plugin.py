@@ -4,7 +4,7 @@ from .type import Type
 
 class Plugin(object):
     def __init__(self, name, version, author, description):
-        self.uri = "org.qiime.plugins.%s" % name
+        self.uri = "/system/plugins/%s" % name
         self.name = name
         self.version = version
         self.author = author
@@ -14,13 +14,14 @@ class Plugin(object):
 
     def register_method(self, name):
         def decorator(function):
-            uri = "%s.methods.%s" % (self.uri, function.__name__)
-            if self.has_method(uri):
+            fn_name = function.__name__
+            uri = "%s/methods/%s" % (self.uri, fn_name)
+            if self.has_method(fn_name):
                 raise Exception()
 
-            self._methods[uri] = Method(uri, name, function,
-                                        function.__annotations__,
-                                        function.__doc__)
+            self._methods[fn_name] = Method(uri, name, function,
+                                            function.__annotations__,
+                                            function.__doc__)
             return function
         return decorator
 
@@ -33,32 +34,34 @@ class Plugin(object):
                 raise TypeError("Class %r must be a subclass of %r." %
                                 (cls, Artifact))
 
-            uri = "%s.types.%s" % (self.uri, cls.__name__)
-            if self.has_type(uri):
+            cls_name = cls.__name__
+            uri = "%s/types/%s" % (self.uri, cls_name)
+            if self.has_type(cls_name):
                 raise Exception()
 
-            self._types[uri] = Type(uri, name, cls.__doc__, 'artifact', cls)
+            self._types[cls_name] = Type(uri, name, cls.__doc__, 'artifact',
+                                         cls)
             return cls
         return decorator
 
-    def has_method(self, uri):
-        return uri in self._methods
+    def has_method(self, name):
+        return name in self._methods
 
-    def get_method(self, uri):
-        if self.has_method(uri):
-            return self._methods[uri]
+    def get_method(self, name):
+        if self.has_method(name):
+            return self._methods[name]
         else:
             raise Exception()
 
     def get_methods(self):
         return self._methods.copy()
 
-    def has_type(self, uri):
-        return uri in self._types
+    def has_type(self, name):
+        return name in self._types
 
-    def get_type(self, uri):
-        if self.has_type(uri):
-            return self._types[uri]
+    def get_type(self, name):
+        if self.has_type(name):
+            return self._types[name]
         else:
             raise Exception()
 

@@ -12,13 +12,35 @@ def get_urls():
 def system_info():
     return {'version': qiime.__version__}
 
-@route('/system/methods', GET, params=['plugin'])
-def list_methods(plugin=None):
-    return {'methods': [m.uri for m in plugin_registry.get_methods(plugin=plugin)]}
+@route('/system/plugins', GET)
+@route('/system/plugins/all', GET)
+def list_plugins():
+    return {'plugins': list(plugin_registry.get_plugin_uris())}
 
-@route('/system/methods/:method', GET)
-def method_info(method_uri):
-    method = plugin_registry.get_method(method_uri)
+@route('/system/plugins/:plugin', GET)
+def plugin_info(plugin_name):
+    plugin = plugin_registry.get_plugin(plugin_name)
+
+    return {
+        'uri': plugin.uri,
+        'name': plugin.name,
+        'version': plugin.version,
+        'author': plugin.author,
+        'description': plugin.description
+    }
+
+@route('/system/plugins/all/methods', GET)
+def list_all_methods():
+    return list_methods(None)
+
+@route('/system/plugins/:plugin/methods', GET)
+def list_methods(plugin_name):
+    return {'methods': [m.uri for m in plugin_registry.get_methods(plugin_name=plugin_name)]}
+
+@route('/system/plugins/:plugin/methods/:method', GET)
+def method_info(plugin_name, method_name):
+    method = plugin_registry.get_plugin(plugin_name).get_method(method_name)
+
     return {
         'uri': method.uri,
         'name': method.name,
@@ -30,31 +52,16 @@ def method_info(method_uri):
         }
     }
 
-@route('/system/plugins', GET)
-def list_plugins():
-    return {'plugins': list(plugin_registry.get_plugin_uris())}
+@route('/system/plugins/all/types', GET, params=['format'])
+def list_all_types(format=None):
+    return list_types(None, format=format)
 
-@route('/system/plugins/:plugin', GET)
-def plugin_info(plugin_uri):
-    plugin = plugin_registry.get_plugin(plugin_uri)
-
-    plugin_info = {
-        'uri': plugin_uri,
-        'name': plugin.name,
-        'version': plugin.version,
-        'author': plugin.author,
-        'description': plugin.description
-    }
-    plugin_info.update(list_methods(plugin=plugin_uri))
-
-    return plugin_info
-
-@route('/system/types', GET, params=['plugin', 'format'])
-def list_types(plugin=None, format=None):
+@route('/system/plugins/:plugin/types', GET, params=['format'])
+def list_types(plugin_name, format=None):
     if format is None:
         format = 'list'
 
-    types = plugin_registry.get_types(plugin=plugin)
+    types = plugin_registry.get_types(plugin_name=plugin_name)
 
     if format == 'list':
         return {
@@ -68,13 +75,13 @@ def list_types(plugin=None, format=None):
             classes.append(cls)
 
         cls_tree = inspect.getclasstree(classes)
-        return _list_tree_to_dict_tree(cls_tree)
+        return _list_tree_to_dict_tree(cls_tree) # TODO use better JSON tree representation
     else:
         raise ValueError("Unrecognized format: %r" % format)
 
-@route('/system/types/:type', GET)
-def type_info(type_uri):
-    type_ = plugin_registry.get_type(type_uri)
+@route('/system/plugins/:plugin/types/:type', GET)
+def type_info(plugin_name, type_name):
+    type_ = plugin_registry.get_plugin(plugin_name).get_type(type_name)
 
     return {
         'uri': type_.uri,
@@ -218,14 +225,23 @@ def list_jobs(study_id, status=None):
         'job_ids': [j.id for j in jobs]
     }
 
-@route('/studies/:study/jobs', POST, params=['workflow_id'])
-def create_job(request, study_id, workflow_id):
-    job = Job(workflow_template=workflow_id, study=study_id)
-    job.save()
-
-    return {
-        'job_id': job.id
-    }
+#@route('/studies/:study/jobs', POST, params=['workflow_id', 'method'])
+#def create_job(request, study_id, workflow_id=None, method=None):
+#    if workflow_id is None and method is None:
+#        raise Exception()
+#    if method is not None and workflow_id is not None:
+#        raise Exception()
+#
+#    if workflow_id is not None:
+#        raise NotImplementedError()
+#
+#    if method is not None:
+#        job = Job(workflow_template=workflow_id, study=study_id)
+#        job.save()
+#
+#    return {
+#        'job_id': job.id
+#    }
 
 @route('/studies/:study/jobs/:job', GET, params=['subscribe'])
 def job_info(study_id, job_id, subscribe=None): # TODO handle SSE

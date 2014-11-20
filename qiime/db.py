@@ -39,23 +39,40 @@ class WorkflowTemplate(BaseModel):
     name = pw.CharField() # TODO should this be normalized?
     description = pw.TextField()
     template = pw.TextField()
-    study = pw.ForeignKeyField(Study, related_name='workflows')
+    study = pw.ForeignKeyField(Study, related_name='workflows', null=True)
 
 # TODO how to handle inputs to the workflow template?
 class Job(BaseModel):
     status = pw.CharField(default='submitted') # TODO normalize
     submitted = pw.DateTimeField(default=datetime.datetime.now)
+    completed = pw.DateTimeField(null=True)
     workflow_template = pw.ForeignKeyField(WorkflowTemplate)
     study = pw.ForeignKeyField(Study, related_name='jobs')
+
+class JobInputParameter(BaseModel):
+    name = pw.CharField()
+    value = pw.BlobField()
+    job = pw.ForeignKeyField(Job, related_name='parameters')
+
+class JobInputArtifact(BaseModel):
+    class Meta:
+        indexes = [(('order', 'job'), True)]
+        order_by = ('order',)
+
+    order = pw.IntegerField()
+    list_id = pw.IntegerField(null=True)
+    artifact = pw.ForeignKeyField(ArtifactProxy)
+    job = pw.ForeignKeyField(Job, related_name='artifacts')
 
 def initialize_db():
     db.connect()
     db.create_tables(
         [Study, Artifact, ArtifactProxy, ArtifactType, WorkflowTemplate,
-         Job], True)
+         Job, JobInputParameter, JobInputArtifact], True)
     _populate_artifact_type_table()
 
 def _populate_artifact_type_table():
-    # TODO when to repopulate? currently reqires db to be wiped each time
     for type_ in plugin_registry.get_types():
-        ArtifactType(uri=type_.uri).save()
+        uri = type_.uri
+        if ArtifactType.select().where(ArtifactType.uri == uri).count() == 0:
+            ArtifactType(uri=uri).save()

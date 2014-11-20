@@ -1,14 +1,14 @@
 import re
-from collections import defaultdict
+from collections import OrderedDict
 
 from tornado.web import RequestHandler, url
 
-GET = 1
-POST = 2
-PUT = 4
-DELETE = 8
+GET = 'get'
+POST = 'post'
+PUT = 'put'
+DELETE = 'delete'
 
-_urls = defaultdict(dict)
+_urls = OrderedDict()
 
 _url_param_regex = re.compile(r'\:[^/]+')
 
@@ -44,14 +44,9 @@ def route(path, method, params=(), authenticate=True):
                 args.insert(0, request_handler.request)
             request_handler.write(function(*args, **kwargs))
 
-        if method == GET:
-            _urls[path]['get'] = wrapped_function
-        elif method == POST:
-            _urls[path]['post'] = wrapped_function
-        elif method == PUT:
-            _urls[path]['put'] = wrapped_function
-        elif method == DELETE:
-            _urls[path]['delete'] = wrapped_function
+        if path not in _urls:
+            _urls[path] = {}
+        _urls[path][method] = wrapped_function
 
         return function
     return decorator

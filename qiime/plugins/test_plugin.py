@@ -15,7 +15,7 @@ class DistanceMatrix(Artifact):
     """Symmetric, hollow 2-D matrix of distances."""
     pass
 
-@qiime.register_type("unifrac distance matrix")
+@qiime.register_type("UniFrac distance matrix")
 class UniFracDistanceMatrix(DistanceMatrix):
     """..."""
     pass
