@@ -1,4 +1,4 @@
-
+from qiime.types import Artifact
 from . import qiime
 
 @qiime.register_method("some method")
@@ -11,7 +11,7 @@ def something_else(a: int, b: str) -> dict:
     pass
 
 @qiime.register_type("distance matrix")
-class DistanceMatrix(object):
+class DistanceMatrix(Artifact):
     """Symmetric, hollow 2-D matrix of distances."""
     pass
 
@@ -26,7 +26,7 @@ class BrayCurtisDistanceMatrix(DistanceMatrix):
     pass
 
 @qiime.register_type("contingency table")
-class ContingencyTable(object):
+class ContingencyTable(Artifact):
     """2-D table of observation counts within each sample."""
     pass
 
@@ -39,7 +39,7 @@ class OTUTable(ContingencyTable):
 # for testing multiple inheritance
 
 @qiime.register_type("rarefied table")
-class RarefiedTable(object):
+class RarefiedTable(Artifact):
     """Rarefied table"""
     pass
 

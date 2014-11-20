@@ -1,3 +1,4 @@
+from qiime.types import Artifact
 from .method import Method
 from .type import Type
 
@@ -28,6 +29,10 @@ class Plugin(object):
 
     def register_type(self, name):
         def decorator(cls):
+            if not issubclass(cls, Artifact):
+                raise TypeError("Class %r must be a subclass of %r." %
+                                (cls, Artifact))
+
             uri = "%s.types.%s" % (self.uri, cls.__name__)
             if self.has_type(uri):
                 raise Exception()
