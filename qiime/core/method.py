@@ -15,6 +15,7 @@ class Method(object):
         else:
             arg_names = spec.args
 
+        self.arg_names = arg_names
         def wrapped_action(*args, **kwargs):
             if len(args) != len(arg_names):
                 raise Exception()
@@ -25,7 +26,7 @@ class Method(object):
                 if type(kwargs[name]) != annotations[name]:
                     raise Exception()
 
-            f_result = function(*args, **kwargs)
+            f_result = function(*[a.data for a in args], **kwargs)
             if type(f_result) != tuple:
                 f_result = (f_result,)
             return_types = annotations['return']
@@ -39,14 +40,20 @@ class Method(object):
 
         self._action = wrapped_action
 
-    def __call__(self, *args, hmac=None, **kwargs):
+    def __call__(self, study, *args, hmac=None, **kwargs):
         # Parallelism goes here
-        try:
-            result = self._action(*self._resolve_uris(args), **kwargs)
-            print(result)
-        except Exception as e:
-            return str(e)
-        return "uri to subscribe to"
+        result = self._action(*self._resolve_uris(*args), **kwargs)
+        for result_artifact in result:
+            result_artifact.save(study)
 
-    def _resolve_uris(self, args):
-        return args
+    def _resolve_uris(self, *artifact_uris):
+        if len(self.arg_names) != len(artifact_uris):
+            raise ValueError("Expected %d artifact URIs, received %d." %
+                             (len(self.arg_names), len(artifact_uris)))
+
+        artifacts = []
+        for arg_name, uri in zip(self.arg_names, artifact_uris):
+            artifact_cls = self.annotations[arg_name]
+            artifact = artifact_cls.from_uri(uri)
+            artifacts.append(artifact)
+        return artifacts

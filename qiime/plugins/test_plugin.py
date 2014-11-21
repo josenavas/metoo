@@ -1,19 +1,35 @@
+from io import StringIO
+
+import skbio
+
+from qiime.core.util import extract_artifact_id
+import qiime.db as db
 from qiime.types import Artifact
 from . import qiime
-
-@qiime.register_method("some method")
-def some_method(a: int, b: str) -> dict:
-    """How does this work"""
-    return {b:a}
-
-@qiime.register_method("other method")
-def something_else(a: int, b: str) -> dict:
-    pass
 
 @qiime.register_type("distance matrix")
 class DistanceMatrix(Artifact):
     """Symmetric, hollow 2-D matrix of distances."""
-    pass
+    data_type = skbio.DistanceMatrix
+
+    @classmethod
+    def from_uri(cls, uri):
+        # TODO this should probably move to the base class
+        artifact_id = extract_artifact_id(uri)
+        artifact = db.ArtifactProxy.get(id=artifact_id)
+        data = cls.data_type.read(StringIO(artifact.artifact.data.decode('utf-8')))
+        return cls(data)
+
+    def save(self, study):
+        artifact_type = qiime.get_type(self.__class__.__name__).uri
+        type_ = db.ArtifactType.get(uri=artifact_type)
+        data = StringIO()
+        self.data.write(data)
+        artifact = db.Artifact(type=type_, data=data.getvalue(), study=study)
+        artifact.save()
+
+        artifact_proxy = db.ArtifactProxy(name='output dm', artifact=artifact, study=study)
+        artifact_proxy.save()
 
 @qiime.register_type("UniFrac distance matrix")
 class UniFracDistanceMatrix(DistanceMatrix):
@@ -46,6 +62,17 @@ class RarefiedTable(Artifact):
 @qiime.register_type("rarefied otu table")
 class RarefiedOTUTable(OTUTable, RarefiedTable):
     """Rarefied OTU table"""
+    pass
+
+@qiime.register_method("Add distance matrices")
+def add_dms(a: DistanceMatrix, b: DistanceMatrix) -> DistanceMatrix:
+    """Add two distance matrices of the same shape."""
+    if a.shape != b.shape:
+        raise ValueError("Distance matrices must be the same shape in order to add them.")
+    return skbio.DistanceMatrix(a.data + b.data)
+
+@qiime.register_method("other method")
+def something_else(a: int, b: str) -> dict:
     pass
 
 # @qiime.register_workflow("some workflow")
@@ -85,6 +112,3 @@ class RarefiedOTUTable(OTUTable, RarefiedTable):
 #     parameters: {}
 #     method: "plugins.qiime.methods.do_thing"
 # }
-#
-#
-#

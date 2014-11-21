@@ -10,18 +10,30 @@ class Artifact(BaseType, metaclass=ABCMeta):
     def data_type(cls):
         pass
 
+    @classmethod
     @abstractmethod
-    def upload(self):
+    def from_uri(cls, uri):
         pass
 
-    @abstractmethod
-    def download(self):
-        pass
+    def __init__(self, data):
+        self._data = data
+
+    @property
+    def data(self):
+        return self._data
+
+    #@abstractmethod
+    #def upload(self):
+    #    pass
+
+    #@abstractmethod
+    #def download(self):
+    #    pass
+
+    #@abstractmethod
+    #def load(self):
+    #    pass
 
     @abstractmethod
-    def load(self):
-        pass
-
-    @abstractmethod
-    def save(self):
+    def save(self, study):
         pass

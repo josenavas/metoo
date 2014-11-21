@@ -1,10 +1,11 @@
 import inspect
-from urllib.parse import urlparse
 
 import qiime
+from qiime.core.executor import Executor
 from qiime.core.registry import plugin_registry
 from qiime.core.tornadotools import route, GET, POST, PUT, DELETE, yield_urls
-from qiime.db import Artifact, ArtifactProxy, ArtifactType, Study, Workflow, Job
+from qiime.core.util import extract_artifact_id
+from qiime.db import Artifact, ArtifactProxy, ArtifactType, Study, Workflow, Job, JobInputArtifact
 
 def get_urls():
     return list(yield_urls())
@@ -163,7 +164,7 @@ def list_artifacts(study_id):
 
 @route('/studies/:study/artifacts', PUT, params=['artifact'])
 def link_artifact(request, study_id, artifact):
-    artifact_id = _extract_artifact_id(artifact)
+    artifact_id = extract_artifact_id(artifact)
     parent_artifact = ArtifactProxy.get(id=artifact_id)
     linked_artifacts = ArtifactProxy.select().where(
         ArtifactProxy.artifact == parent_artifact.artifact,
@@ -230,14 +231,16 @@ def list_jobs(study_id, status=None):
         'uris': [j.uri for j in jobs]
     }
 
-@route('/studies/:study/jobs', POST, params=['workflow', 'method'])
-def create_job(request, study_id, workflow=None, method=None):
+@route('/studies/:study/jobs', POST, params=['workflow', 'method', 'artifacts', 'parameters'])
+def create_job(request, study_id, workflow=None, method=None, artifacts=None, parameters=None):
     if workflow is None and method is None:
         raise Exception()
     if method is not None and workflow is not None:
         raise Exception()
 
     if workflow is not None:
+        raise NotImplementedError()
+    if parameters is not None:
         raise NotImplementedError()
 
     if method is not None:
@@ -249,19 +252,43 @@ def create_job(request, study_id, workflow=None, method=None):
         job = Job(workflow=workflow, study=study_id)
         job.save()
 
-    return {
-        'uri': job.uri
-    }
+        if artifacts is not None:
+            # TODO using a comma-separated list of artifact uris. need to find
+            # a better way to handle this (we can't call get_arguments() in
+            # this context)
+            artifacts = [a.strip() for a in artifacts.split(',')]
+            for idx, artifact_uri in enumerate(artifacts):
+                artifact_id = extract_artifact_id(artifact_uri)
+                artifact = ArtifactProxy.get(id=artifact_id)
+                artifact_input = JobInputArtifact(order=idx, artifact=artifact,
+                                                  job=job)
+                artifact_input.save()
+
+        # TODO we don't want to fire off the job here b/c this will block
+        # tornado
+        Executor(job)()
+
+        return {
+            'uri': job.uri
+        }
 
 @route('/studies/:study/jobs/:job', GET, params=['subscribe'])
 def job_info(study_id, job_id, subscribe=None): # TODO handle SSE
+    if subscribe is not None:
+        raise NotImplementedError()
+
     job = Job.get(id=job_id)
+    completed = job.completed
+    if completed is not None:
+        completed = str(completed)
 
     return {
         'uri': job.uri,
         'status': job.status,
         'submitted': str(job.submitted),
+        'completed': completed,
         'workflow': job.workflow.uri,
+        'artifacts': [a.artifact.uri for a in job.artifacts]
     }
 
 # TODO handle updating downstream parts of the workflow
@@ -381,9 +408,6 @@ def _get_file_data(request):
                          (repr(upload_name), len(file_infos)))
     file_info = file_infos[0]
     return file_info['body'] # bytes
-
-def _extract_artifact_id(artifact_uri):
-    return int(urlparse(artifact_uri).path.split('/')[-1])
 
 def _generate_workflow_template_from_method(method_uri):
     # TODO finish me! :please:
