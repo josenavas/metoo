@@ -1,6 +1,6 @@
 from qiime.core.util import is_uri, get_feature_from_uri
 
-class PluginRegistry(object):
+class _PluginRegistry(object):
     def __init__(self):
         self._plugins = {}
 
@@ -34,4 +34,4 @@ class PluginRegistry(object):
             for type_ in self.get_plugin(name).get_types().values():
                 yield type_
 
-plugin_registry = PluginRegistry()
+plugin_registry = _PluginRegistry()

@@ -89,7 +89,6 @@ def type_info(plugin_name, type_name):
         'uri': type_.uri,
         'name': type_.name,
         'description': type_.description,
-        'type_class': type_.type_class
     }
 
 @route('/system/types', GET)

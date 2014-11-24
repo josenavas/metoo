@@ -43,13 +43,17 @@ Registered types in the specified plugin. Query parameter ``format`` will specif
 ## /system/plugins/:plugin/types/:type
 
 ### GET
-Info about the registered type, e.g., name, description, type class, etc.
+Info about the registered type, e.g., name, description, etc.
 
-## /system/types
-Registered primitive and parameterized types.
+## /system/types/primitives
 
 ### GET
-List of registered types in the specified plugin.
+List of registered primitive types.
+
+## /system/types/parameterized
+
+### GET
+List of registered parameterized types.
 
 ## /studies
 

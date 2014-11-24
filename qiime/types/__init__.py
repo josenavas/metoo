@@ -46,3 +46,47 @@ class Artifact(BaseType, metaclass=ABCMeta):
     @abstractmethod
     def save_data(self):
         pass
+
+class _TypeRegistry(object):
+    def __init__(self):
+        self._artifacts = {}
+        self._primitives = {}
+        self._parameterized = {}
+
+    def register_artifact_type(self, artifact_type):
+        uri = artifact_type.uri
+
+        if self.has_type(uri):
+            raise Exception()
+
+        self._artifacts[uri] = artifact_type
+
+    def has_type(self, uri):
+        return ((uri in self._artifacts) or
+                (uri in self._primitives) or
+                (uri in self._parameterized))
+
+    def get_type(self, uri):
+        if not self.has_type(uri):
+            raise Exception()
+
+        if uri in self._artifacts:
+            return self._artifacts[uri]
+        if uri in self._primitives:
+            return self._primitives[uri]
+        if uri in self._parameterized:
+            return self._parameterized[uri]
+
+    @property
+    def artifacts(self):
+        return self._artifacts.keys()
+
+    @property
+    def primitives(self):
+        return self._primitives.keys()
+
+    @property
+    def parameterized(self):
+        return self._parameterized.keys()
+
+type_registry = _TypeRegistry()
