@@ -33,17 +33,23 @@ Information about the method, e.g., name, description, annotations, etc.
 ## /system/plugins/all/types
 
 ### GET
-List of all registered types across all plugins. Query parameter ``format`` will specify the structure of the output format: ``list`` will be a flat list of type URIs and ``tree`` will be a JSON tree indicating the hierarchical relationship among the types.
+Registered types across all plugins. Query parameter ``format`` will specify the structure of the output format: ``list`` will be a flat list of type URIs and ``tree`` will be a JSON tree indicating the hierarchical relationship among the types.
 
 ## /system/plugins/:plugin/types
 
 ### GET
-List of registered types in the specified plugin.
+Registered types in the specified plugin. Query parameter ``format`` will specify the structure of the output format: ``list`` will be a flat list of type URIs and ``tree`` will be a JSON tree indicating the hierarchical relationship among the types.
 
 ## /system/plugins/:plugin/types/:type
 
 ### GET
 Info about the registered type, e.g., name, description, type class, etc.
+
+## /system/types
+Registered primitive and parameterized types.
+
+### GET
+List of registered types in the specified plugin.
 
 ## /studies
 

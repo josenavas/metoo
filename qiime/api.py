@@ -48,18 +48,18 @@ def method_info(plugin_name, method_name):
         'name': method.name,
         'help': method.docstring,
         'annotations': {
-            'artifacts': [],  # (parameterized) artifacts (defined in org.qiime.plugins.[plugin-name].artifacts)
-            'parameters': {}, # (parameterized) primitives (defined in org.qiime.types.primitives|parameterized)
-            'return': []      # (parameterized) artifacts
+            'artifacts': [],  # TODO (parameterized) artifacts (defined in org.qiime.plugins.[plugin-name].artifacts)
+            'parameters': {}, # TODO (parameterized) primitives (defined in org.qiime.types.primitives|parameterized)
+            'return': []      # TODO (parameterized) artifacts
         }
     }
 
 @route('/system/plugins/all/types', GET, params=['format'])
-def list_all_types(format=None):
-    return list_types(None, format=format)
+def list_all_plugin_types(format=None):
+    return list_plugin_types(None, format=format)
 
 @route('/system/plugins/:plugin/types', GET, params=['format'])
-def list_types(plugin_name, format=None):
+def list_plugin_types(plugin_name, format=None):
     if format is None:
         format = 'list'
 
@@ -91,6 +91,10 @@ def type_info(plugin_name, type_name):
         'description': type_.description,
         'type_class': type_.type_class
     }
+
+@route('/system/types', GET)
+def list_system_types():
+    pass
 
 @route('/studies', GET)
 def list_studies():
