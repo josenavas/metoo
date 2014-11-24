@@ -2,7 +2,6 @@ from io import StringIO
 
 import skbio
 
-from qiime.core.util import extract_artifact_id
 import qiime.db as db
 from qiime.types import Artifact
 from . import qiime
@@ -13,12 +12,8 @@ class DistanceMatrix(Artifact):
     data_type = skbio.DistanceMatrix
 
     @classmethod
-    def from_uri(cls, uri):
-        # TODO this should probably move to the base class
-        artifact_id = extract_artifact_id(uri)
-        artifact = db.ArtifactProxy.get(id=artifact_id)
-        data = cls.data_type.read(StringIO(artifact.artifact.data.decode('utf-8')))
-        return cls(data)
+    def _load_data(cls, data_blob):
+        return cls.data_type.read(StringIO(data_blob.decode('utf-8')))
 
     def save(self, study):
         artifact_type = qiime.get_type(self.__class__.__name__).uri
