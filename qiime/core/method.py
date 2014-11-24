@@ -43,8 +43,10 @@ class Method(object):
     def __call__(self, study, *args, hmac=None, **kwargs):
         # Parallelism goes here
         result = self._action(*self._resolve_uris(*args), **kwargs)
-        for result_artifact in result:
-            result_artifact.save(study)
+        for result_idx, result_artifact in enumerate(result):
+            # TODO handle output naming better
+            result_artifact.save(study,
+                                 '%s output %d' % (self.name, result_idx + 1))
 
     def _resolve_uris(self, *artifact_uris):
         if len(self.arg_names) != len(artifact_uris):

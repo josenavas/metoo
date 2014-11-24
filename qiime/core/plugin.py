@@ -42,6 +42,7 @@ class Plugin(object):
 
             self._types[cls_name] = Type(uri, name, cls.__doc__, 'artifact',
                                          cls)
+            cls.uri = uri
             return cls
         return decorator
 

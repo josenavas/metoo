@@ -1,12 +1,14 @@
 from abc import ABCMeta, abstractmethod
 
+import qiime.db as db
 from qiime.core.util import extract_artifact_id
-from qiime.db import ArtifactProxy
 
 class BaseType(object):
     pass
 
 class Artifact(BaseType, metaclass=ABCMeta):
+    uri = None
+
     @property
     @classmethod
     @abstractmethod
@@ -16,7 +18,7 @@ class Artifact(BaseType, metaclass=ABCMeta):
     @classmethod
     def from_uri(cls, uri):
         artifact_id = extract_artifact_id(uri)
-        artifact = ArtifactProxy.get(id=artifact_id)
+        artifact = db.ArtifactProxy.get(id=artifact_id)
         data = cls._load_data(artifact.artifact.data)
         return cls(data)
 
@@ -32,18 +34,11 @@ class Artifact(BaseType, metaclass=ABCMeta):
     def data(self):
         return self._data
 
-    #@abstractmethod
-    #def upload(self):
-    #    pass
+    def save(self, study, name):
+        type_ = db.ArtifactType.get(uri=self.uri)
+        artifact = db.Artifact(type=type_, data=self._save_data(), study=study)
+        artifact.save()
 
-    #@abstractmethod
-    #def download(self):
-    #    pass
-
-    #@abstractmethod
-    #def load(self):
-    #    pass
-
-    @abstractmethod
-    def save(self, study):
-        pass
+        artifact_proxy = db.ArtifactProxy(name=name, artifact=artifact,
+                                          study=study)
+        artifact_proxy.save()

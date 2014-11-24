@@ -2,7 +2,6 @@ from io import StringIO
 
 import skbio
 
-import qiime.db as db
 from qiime.types import Artifact
 from . import qiime
 
@@ -15,16 +14,10 @@ class DistanceMatrix(Artifact):
     def _load_data(cls, data_blob):
         return cls.data_type.read(StringIO(data_blob.decode('utf-8')))
 
-    def save(self, study):
-        artifact_type = qiime.get_type(self.__class__.__name__).uri
-        type_ = db.ArtifactType.get(uri=artifact_type)
-        data = StringIO()
-        self.data.write(data)
-        artifact = db.Artifact(type=type_, data=data.getvalue(), study=study)
-        artifact.save()
-
-        artifact_proxy = db.ArtifactProxy(name='output dm', artifact=artifact, study=study)
-        artifact_proxy.save()
+    def _save_data(self):
+        data_blob = StringIO()
+        self.data.write(data_blob)
+        return data_blob.getvalue()
 
 @qiime.register_type("UniFrac distance matrix")
 class UniFracDistanceMatrix(DistanceMatrix):
