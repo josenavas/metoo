@@ -6,6 +6,7 @@ from qiime.core.registry import plugin_registry
 from qiime.core.tornadotools import route, GET, POST, PUT, DELETE, yield_urls
 from qiime.core.util import extract_artifact_id
 from qiime.db import Artifact, ArtifactProxy, ArtifactType, Study, Workflow, Job, JobInputArtifact
+from qiime.types import type_registry
 
 def get_urls():
     return list(yield_urls())
@@ -85,9 +86,24 @@ def type_info(plugin_name, type_name):
         'description': type_.description,
     }
 
-@route('/system/types', GET)
-def list_system_types():
-    pass
+@route('/system/types/primitives', GET)
+def list_primitive_types():
+    return {
+        'types': [t.uri for t in type_registry.primitives]
+    }
+
+#@route('/system/types/primitives/:type', GET)
+#def primitive_type_info(type_name):
+#    type_ = type_registry.get_type(
+#    return {
+#        'types': [t.uri for t in type_registry.primitives]
+#    }
+
+@route('/system/types/parameterized', GET)
+def list_parameterized_types():
+    return {
+        'types': [t.uri for t in type_registry.parameterized]
+    }
 
 @route('/studies', GET)
 def list_studies():

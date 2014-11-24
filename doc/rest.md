@@ -50,10 +50,20 @@ Info about the registered type, e.g., name, description, etc.
 ### GET
 List of registered primitive types.
 
+## /system/types/primitives/:type
+
+### GET
+Info about the registered primitive type.
+
 ## /system/types/parameterized
 
 ### GET
 List of registered parameterized types.
+
+## /system/types/parameterized/:type
+
+### GET
+Info about the registered parameterized type.
 
 ## /studies
 

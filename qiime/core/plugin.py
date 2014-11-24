@@ -1,5 +1,5 @@
 from qiime.core.util import is_uri, get_feature_from_uri
-from qiime.types import type_registry, Artifact
+from qiime.types import Artifact
 from .method import Method
 from .type import Type
 
@@ -11,7 +11,7 @@ class Plugin(object):
         self.author = author
         self.description = description
         self._methods = {}
-        self._types = set() # set of artifact type uris
+        self._types = {}
 
     def register_method(self, name):
         def decorator(function):
@@ -36,18 +36,12 @@ class Plugin(object):
                                 (cls, Artifact))
 
             cls_name = cls.__name__
-            uri = "%s/types/%s" % (self.uri, cls_name)
             if self.has_type(cls_name):
                 raise Exception()
 
-            # create the type...
+            uri = "%s/types/%s" % (self.uri, cls_name)
             cls.uri = uri
-            type_ = Type(uri, name, cls.__doc__, cls)
-
-            # ...and register it!
-            type_registry.register_artifact_type(type_)
-            self._types.add(uri)
-
+            self._types[cls_name] = Type(uri, name, cls.__doc__, cls)
             return cls
         return decorator
 
@@ -67,18 +61,18 @@ class Plugin(object):
     def get_methods(self):
         return self._methods.copy()
 
-    def has_type(self, uri):
-        if not is_uri(uri, 'types'):
-            uri = '%s/types/%s' % (self.uri, uri)
-        return uri in self._types
+    def has_type(self, name):
+        if is_uri(name, 'types'):
+            name = get_feature_from_uri(name, 'types')
+        return name in self._types
 
-    def get_type(self, uri):
-        if not is_uri(uri, 'types'):
-            uri = '%s/types/%s' % (self.uri, uri)
-        if self.has_type(uri):
-            return type_registry.get_type(uri)
+    def get_type(self, name):
+        if is_uri(name, 'types'):
+            name = get_feature_from_uri(name, 'types')
+        if self.has_type(name):
+            return self._types[name]
         else:
             raise Exception()
 
     def get_types(self):
-        return {u: type_registry.get_type(u) for u in self._types}
+        return self._types.copy()
