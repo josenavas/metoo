@@ -70,13 +70,7 @@ def list_plugin_types(plugin_name, format=None):
             'types': [t.uri for t in types]
         }
     elif format == 'tree':
-        classes = []
-        for type_ in types:
-            cls = type_.cls
-            cls.__uri = type_.uri # TODO this is very much hacked... maybe use a cls -> uri lookup?
-            classes.append(cls)
-
-        cls_tree = inspect.getclasstree(classes)
+        cls_tree = inspect.getclasstree([t.cls for t in types])
         return _list_tree_to_dict_tree(cls_tree) # TODO use better JSON tree representation
     else:
         raise ValueError("Unrecognized format: %r" % format)
@@ -379,8 +373,8 @@ def _list_tree_to_dict_tree(list_tree):
     for entry in list_tree:
         if isinstance(entry, tuple):
             cls = entry[0]
-            if hasattr(cls, '__uri'):
-                uri = cls.__uri
+            if hasattr(cls, 'uri') and cls.uri is not None:
+                uri = cls.uri
             else:
                 uri = cls.__name__
             subtree = {}
