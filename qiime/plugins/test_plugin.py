@@ -11,10 +11,10 @@ class DistanceMatrix(Artifact):
     data_type = skbio.DistanceMatrix
 
     @classmethod
-    def _load_data(cls, data_blob):
+    def load_data(cls, data_blob):
         return cls.data_type.read(StringIO(data_blob.decode('utf-8')))
 
-    def _save_data(self):
+    def save_data(self):
         data_blob = StringIO()
         self.data.write(data_blob)
         return data_blob.getvalue()

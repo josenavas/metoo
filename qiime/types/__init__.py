@@ -19,12 +19,12 @@ class Artifact(BaseType, metaclass=ABCMeta):
     def from_uri(cls, uri):
         artifact_id = extract_artifact_id(uri)
         artifact = db.ArtifactProxy.get(id=artifact_id)
-        data = cls._load_data(artifact.artifact.data)
+        data = cls.load_data(artifact.artifact.data)
         return cls(data)
 
     @classmethod
     @abstractmethod
-    def _load_data(cls, data_blob):
+    def load_data(cls, data_blob):
         pass
 
     def __init__(self, data):
@@ -36,9 +36,13 @@ class Artifact(BaseType, metaclass=ABCMeta):
 
     def save(self, study, name):
         type_ = db.ArtifactType.get(uri=self.uri)
-        artifact = db.Artifact(type=type_, data=self._save_data(), study=study)
+        artifact = db.Artifact(type=type_, data=self.save_data(), study=study)
         artifact.save()
 
         artifact_proxy = db.ArtifactProxy(name=name, artifact=artifact,
                                           study=study)
         artifact_proxy.save()
+
+    @abstractmethod
+    def save_data(self):
+        pass
