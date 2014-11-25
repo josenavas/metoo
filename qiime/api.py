@@ -12,16 +12,16 @@ def get_urls():
     return list(yield_urls())
 
 @route('/system', GET)
-def system_info():
+def system_info(request):
     return {'version': qiime.__version__}
 
 @route('/system/plugins', GET)
 @route('/system/plugins/all', GET)
-def list_plugins():
+def list_plugins(request):
     return {'plugins': list(plugin_registry.get_plugin_uris())}
 
 @route('/system/plugins/:plugin', GET)
-def plugin_info(plugin_name):
+def plugin_info(request, plugin_name):
     plugin = plugin_registry.get_plugin(plugin_name)
 
     return {
@@ -33,15 +33,15 @@ def plugin_info(plugin_name):
     }
 
 @route('/system/plugins/all/methods', GET)
-def list_all_methods():
+def list_all_methods(request):
     return list_methods(None)
 
 @route('/system/plugins/:plugin/methods', GET)
-def list_methods(plugin_name):
+def list_methods(request, plugin_name):
     return {'methods': [m.uri for m in plugin_registry.get_methods(plugin_name=plugin_name)]}
 
 @route('/system/plugins/:plugin/methods/:method', GET)
-def method_info(plugin_name, method_name):
+def method_info(request, plugin_name, method_name):
     method = plugin_registry.get_plugin(plugin_name).get_method(method_name)
 
     return {
@@ -49,18 +49,18 @@ def method_info(plugin_name, method_name):
         'name': method.name,
         'help': method.docstring,
         'annotations': {
-            'artifacts': [],  # TODO (parameterized) artifacts (defined in org.qiime.plugins.[plugin-name].artifacts)
-            'parameters': {}, # TODO (parameterized) primitives (defined in org.qiime.types.primitives|parameterized)
+            'artifacts': [],  # TODO (parameterized) artifacts (defined in qiime.plugins.[plugin-name].artifacts)
+            'parameters': {}, # TODO (parameterized) primitives (defined in qiime.types.primitives|parameterized)
             'return': []      # TODO (parameterized) artifacts
         }
     }
 
 @route('/system/plugins/all/types', GET, params=['format'])
-def list_all_plugin_types(format=None):
+def list_all_plugin_types(request, format=None):
     return list_plugin_types(None, format=format)
 
 @route('/system/plugins/:plugin/types', GET, params=['format'])
-def list_plugin_types(plugin_name, format=None):
+def list_plugin_types(request, plugin_name, format=None):
     if format is None:
         format = 'list'
 
@@ -77,36 +77,50 @@ def list_plugin_types(plugin_name, format=None):
         raise ValueError("Unrecognized format: %r" % format)
 
 @route('/system/plugins/:plugin/types/:type', GET)
-def type_info(plugin_name, type_name):
+def plugin_type_info(request, plugin_name, type_name):
     type_ = plugin_registry.get_plugin(plugin_name).get_type(type_name)
 
     return {
         'uri': type_.uri,
         'name': type_.name,
-        'description': type_.description,
+        'description': type_.description
     }
 
 @route('/system/types/primitives', GET)
-def list_primitive_types():
+def list_primitive_types(request):
     return {
-        'types': [t.uri for t in type_registry.primitives]
+        'types': [t.uri for t in type_registry.get_primitive_types().values()]
     }
 
-#@route('/system/types/primitives/:type', GET)
-#def primitive_type_info(type_name):
-#    type_ = type_registry.get_type(
-#    return {
-#        'types': [t.uri for t in type_registry.primitives]
-#    }
+@route('/system/types/primitives/:type', GET)
+def primitive_type_info(request, type_name):
+    type_ = type_registry.get_primitive_type(type_name)
+
+    return {
+        'uri': type_.uri,
+        'name': type_.name,
+        'description': type_.description
+    }
 
 @route('/system/types/parameterized', GET)
-def list_parameterized_types():
+def list_parameterized_types(request):
     return {
-        'types': [t.uri for t in type_registry.parameterized]
+        'types': [t.uri for t in
+                  type_registry.get_parameterized_types().values()]
     }
 
+#@route('/system/types/parameterized/:type', GET)
+#def parameterized_type_info(type_name):
+#    type_ = type_registry.get_parameterized_type(type_name)
+#
+#    return {
+#        'uri': type_.uri,
+#        'name': type_.name,
+#        'description': type_.description
+#    }
+
 @route('/studies', GET)
-def list_studies():
+def list_studies(request):
     return {
         'uris': [study.uri for study in Study.select()]
     }
@@ -120,7 +134,7 @@ def create_study(request, name, description):
     }
 
 @route('/studies/:study', GET)
-def study_info(study_id):
+def study_info(request, study_id):
     study = Study.get(Study.id == study_id)
 
     return {
@@ -142,7 +156,7 @@ def study_info(request, study_id, name=None, description=None):
     return {} # TODO normalize responses with status
 
 @route('/studies/:study', DELETE)
-def study_info(study_id):
+def study_info(request, study_id):
     study = Study.get(Study.id == study_id)
     study.delete_instance() # TODO think about cascading deletes
 
@@ -168,7 +182,7 @@ def create_artifact(request, study_id, name, artifact_type):
     }
 
 @route('/studies/:study/artifacts', GET)
-def list_artifacts(study_id):
+def list_artifacts(request, study_id):
     artifacts = Study.get(id=study_id).artifacts
 
     return {
@@ -196,7 +210,7 @@ def link_artifact(request, study_id, artifact):
     }
 
 @route('/studies/:study/artifacts/:artifact', GET, params=['export'])
-def artifact_info(study_id, artifact_id, export=None):
+def artifact_info(request, study_id, artifact_id, export=None):
     if export is not None:
         raise NotImplementedError()
 
@@ -224,7 +238,7 @@ def update_artifact(request, study_id, artifact_id, name=None):
     return {}
 
 @route('/studies/:study/artifacts/:artifact', DELETE)
-def delete_artifact(study_id, artifact_id):
+def delete_artifact(request, study_id, artifact_id):
     proxy = ArtifactProxy.get(id=artifact_id)
     if proxy.study.id == int(study_id): # TODO fix int hack!
         proxy.delete_instance()
@@ -234,7 +248,7 @@ def delete_artifact(study_id, artifact_id):
     return {}
 
 @route('/studies/:study/jobs', GET, params=['status'])
-def list_jobs(study_id, status=None):
+def list_jobs(request, study_id, status=None):
     jobs = Study.get(id=study_id).jobs
 
     if status is not None:
@@ -286,7 +300,7 @@ def create_job(request, study_id, workflow=None, method=None, artifacts=None, pa
         }
 
 @route('/studies/:study/jobs/:job', GET, params=['subscribe'])
-def job_info(study_id, job_id, subscribe=None): # TODO handle SSE
+def job_info(request, study_id, job_id, subscribe=None): # TODO handle SSE
     if subscribe is not None:
         raise NotImplementedError()
 
@@ -318,7 +332,7 @@ def update_job(request, study_id, job_id, status=None):
     return {}
 
 @route('/studies/:study/jobs/:job', DELETE)
-def terminate_job(study_id, job_id):
+def terminate_job(request, study_id, job_id):
     job = Job.get(id=job_id)
     job.status = 'terminated'
     job.save()
@@ -326,7 +340,7 @@ def terminate_job(study_id, job_id):
     return {}
 
 @route('/studies/:study/workflows', GET)
-def list_workflows(study_id):
+def list_workflows(request, study_id):
     workflows = Study.get(id=study_id).workflows
 
     return {
@@ -345,7 +359,7 @@ def create_workflow(request, study_id, name, description, template):
     }
 
 @route('/studies/:study/workflows/:workflow', GET)
-def workflow_info(study_id, workflow_id):
+def workflow_info(request, study_id, workflow_id):
     workflow = Workflow.get(id=workflow_id)
 
     return {
@@ -373,7 +387,7 @@ def update_workflow(request, study_id, workflow_id, name=None,
     return {}
 
 @route('/studies/:study/workflows/:workflow', DELETE)
-def delete_workflow(study_id, workflow_id):
+def delete_workflow(request, study_id, workflow_id):
     workflow = Workflow.get(id=workflow_id)
 
     if workflow.study.id == int(study_id): # TODO fix int hack!

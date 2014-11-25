@@ -1,61 +1,64 @@
 import inspect
 
 class Method(object):
-    def __init__(self, uri, name, function, annotations, docstring):
+    def __init__(self, function, uri, name, docstring, annotations):
         self.uri = uri
         self.name = name
-        self.annotations = annotations
         self.docstring = docstring
+
+        if type(annotations['return']) != tuple:
+            annotations['return'] = (annotations['return'],)
+        self.annotations = annotations
 
         spec = inspect.getfullargspec(function)
         if spec.defaults:
             kwarg_start = -len(spec.defaults)
-            arg_names = spec.args[:kwarg_start]
-            kwargs_ = dict(zip(spec.args[kwarg_start:], spec.defaults))
+            arg_order = spec.args[:kwarg_start]
+            defaults = dict(zip(spec.args[kwarg_start:], spec.defaults))
         else:
-            arg_names = spec.args
+            arg_order = spec.args
+            defaults = {}
 
-        self.arg_names = arg_names
-        def wrapped_action(*args, **kwargs):
-            if len(args) != len(arg_names):
-                raise Exception()
-            for arg, name in zip(args, arg_names):
-                if type(arg) != annotations[name]:
-                    raise Exception()
-            for name in kwargs:
-                if type(kwargs[name]) != annotations[name]:
-                    raise Exception()
+        self._arg_order = arg_order
+        self._defaults = defaults
+        self._function = function
 
-            f_result = function(*[a.data for a in args], **kwargs)
-            if type(f_result) != tuple:
-                f_result = (f_result,)
-            return_types = annotations['return']
-            if type(return_types) != tuple:
-                return_types = (annotations['return'],)
+    def __call__(self, study, *args, **kwargs):
+        args = self._resolve_args(args)
+        kwargs = self._resolve_kwargs(kwargs)
+        results = self._function(*args, **kwargs)
 
-            results = []
-            for r, t in zip(f_result, return_types):
-                results.append(t(r))
-            return tuple(results)
+        if type(results) != tuple:
+            results = (results,)
 
-        self._action = wrapped_action
+        if len(results) != len(self.annotations['return']):
+            raise Exception()
 
-    def __call__(self, study, *args, hmac=None, **kwargs):
-        # Parallelism goes here
-        result = self._action(*self._resolve_uris(*args), **kwargs)
-        for result_idx, result_artifact in enumerate(result):
+        for result_idx, (result, result_type) in enumerate(zip(results, self.annotations['return'])):
+            if not isinstance(result, result_type.data_type):
+                raise TypeError()
+
             # TODO handle output naming better
-            result_artifact.save(study,
-                                 '%s output %d' % (self.name, result_idx + 1))
+            result_type.save(result, study, '%s output %d' % (self.name, result_idx + 1))
 
-    def _resolve_uris(self, *artifact_uris):
-        if len(self.arg_names) != len(artifact_uris):
-            raise ValueError("Expected %d artifact URIs, received %d." %
-                             (len(self.arg_names), len(artifact_uris)))
+    def _resolve_args(self, args):
+        if len(self._arg_order) != len(args):
+            raise ValueError("Expected %d arguments, received %d." %
+                             (len(self._arg_order), len(args)))
 
-        artifacts = []
-        for arg_name, uri in zip(self.arg_names, artifact_uris):
-            artifact_cls = self.annotations[arg_name]
-            artifact = artifact_cls.from_uri(uri)
-            artifacts.append(artifact)
-        return artifacts
+        resolved_args = []
+        for arg_name, arg in zip(self._arg_order, args):
+            type_ = self.annotations[arg_name]
+            resolved_args.append(type_.load(arg))
+        return resolved_args
+
+    def _resolve_kwargs(self, kwargs):
+        resolved_kwargs = {}
+        for key in self._defaults:
+            type_ = self.annotations[key]
+
+            if key in kwargs:
+                resolved_kwargs[key] = type_.load(kwargs[key])
+            else:
+                resolved_kwargs[key] = type_.load(self._defaults[key])
+        return resolved_kwargs

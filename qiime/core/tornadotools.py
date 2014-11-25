@@ -17,6 +17,7 @@ def yield_urls():
         class APIHandler(RequestHandler):
             def set_default_headers(self):
                 self.set_header("Access-Control-Allow-Origin", "*")
+                self.set_header("Content-Type", "application/json")
 
             def options(self):
                 pass
@@ -37,11 +38,10 @@ def route(path, method, params=(), authenticate=True):
                 # TODO: Authenticate here
                 pass
             # TODO: validate parameters passed
-            if request_handler.request.method == 'POST' or request_handler.request.method == 'PUT':
-                args = list(args)
-                # TODO: get smarter about passing only the needed data instead
-                # of a full request object.
-                args.insert(0, request_handler.request)
+            args = list(args)
+            # TODO: get smarter about passing only the needed data instead
+            # of a full request object.
+            args.insert(0, request_handler.request)
             request_handler.write(function(*args, **kwargs))
 
         if path not in _urls:

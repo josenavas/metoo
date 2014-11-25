@@ -20,9 +20,9 @@ class Plugin(object):
             if self.has_method(fn_name):
                 raise Exception()
 
-            self._methods[fn_name] = Method(uri, name, function,
-                                            function.__annotations__,
-                                            function.__doc__)
+            self._methods[fn_name] = Method(function, uri, name,
+                                            function.__doc__,
+                                            function.__annotations__)
             return function
         return decorator
 
