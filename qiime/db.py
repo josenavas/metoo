@@ -5,8 +5,6 @@ import peewee as pw
 # ... also very creepy
 from playhouse.sqlite_ext import PrimaryKeyAutoIncrementField
 
-from qiime.core.registry import plugin_registry
-
 db = pw.SqliteDatabase('qiime2.db')
 
 class BaseModel(pw.Model):
@@ -24,12 +22,12 @@ class Study(BaseModel):
     def uri(self):
         return '/studies/%d' % self.id
 
-class ArtifactType(BaseModel):
+class Type(BaseModel):
     uri = pw.CharField(unique=True) # TODO should this be TextField? we don't know how long these uris might be in practice
 
 class Artifact(BaseModel):
     data = pw.BlobField()
-    type = pw.ForeignKeyField(ArtifactType)
+    type = pw.ForeignKeyField(Type)
     study = pw.ForeignKeyField(Study)
 
 class ArtifactProxy(BaseModel):
@@ -53,6 +51,15 @@ class Workflow(BaseModel):
     def uri(self):
         return '/studies/%d/workflows/%d' % (self.study.id, self.id)
 
+class WorkflowInput(BaseModel):
+    class Meta:
+        indexes = [(('key', 'workflow'), True)]
+
+    name = pw.CharField()
+    type = pw.ForeignKeyField(Type)
+    default = pw.BlobField(null=True)
+    workflow = pw.ForeignKeyField(Workflow, related_name='inputs')
+
 # TODO how to handle inputs to the workflow?
 class Job(BaseModel):
     status = pw.CharField(default='submitted') # TODO normalize
@@ -65,30 +72,24 @@ class Job(BaseModel):
     def uri(self):
         return '/studies/%d/jobs/%d' % (self.study.id, self.id)
 
-class JobInputParameter(BaseModel):
-    name = pw.CharField()
-    value = pw.BlobField()
-    job = pw.ForeignKeyField(Job, related_name='parameters')
-
-class JobInputArtifact(BaseModel):
+class JobInput(BaseModel):
     class Meta:
-        indexes = [(('order', 'job'), True)]
-        order_by = ('order',)
+        indexes = [(('key', 'job'), True)]
 
-    order = pw.IntegerField()
-    list_id = pw.IntegerField(null=True)
-    artifact = pw.ForeignKeyField(ArtifactProxy)
-    job = pw.ForeignKeyField(Job, related_name='artifacts')
+    key = pw.CharField()
+    value = pw.BlobField()
+    job = pw.ForeignKeyField(Job, related_name='inputs')
 
 def initialize_db():
     db.connect()
     db.create_tables(
-        [Study, Artifact, ArtifactProxy, ArtifactType, Workflow, Job,
-         JobInputParameter, JobInputArtifact], True)
-    _populate_artifact_type_table()
+        [Study, Artifact, ArtifactProxy, Type, Workflow, Job, JobInput], True)
+    _populate_type_table()
 
-def _populate_artifact_type_table():
-    for type_ in plugin_registry.get_types():
-        uri = type_.uri
-        if ArtifactType.select().where(ArtifactType.uri == uri).count() == 0:
-            ArtifactType(uri=uri).save()
+def _populate_type_table():
+    # circular imports FTW
+    from qiime.types import type_registry
+
+    for uri in type_registry.get_types():
+        if Type.select().where(Type.uri == uri).count() == 0:
+            Type(uri=uri).save()

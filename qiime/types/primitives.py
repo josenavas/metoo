@@ -1,7 +1,7 @@
-from qiime.types import type_registry, PrimitiveType
+from qiime.types import type_registry, Primitive
 
 def primitive_factory(class_name, primitive):
-    class _(PrimitiveType):
+    class _(Primitive):
         @classmethod
         def normalize(cls, data):
             return primitive(data)

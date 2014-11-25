@@ -31,7 +31,7 @@ class _PluginRegistry(object):
         else:
             plugin_names = [plugin_name]
         for name in plugin_names:
-            for type_ in self.get_plugin(name).get_types().values():
+            for type_ in self.get_plugin(name).get_types():
                 yield type_
 
 plugin_registry = _PluginRegistry()

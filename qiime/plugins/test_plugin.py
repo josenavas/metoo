@@ -2,12 +2,16 @@ from io import StringIO
 
 import skbio
 
+from qiime.types.parameterized import ChooseOne
+from qiime.types.primitives import Integer
+
 from qiime.types import Artifact
 from . import qiime
 
-@qiime.register_type("distance matrix")
+@qiime.register_type
 class DistanceMatrix(Artifact):
     """Symmetric, hollow 2-D matrix of distances."""
+    name = 'distance matrix'
     data_type = skbio.DistanceMatrix
 
     @classmethod
@@ -20,44 +24,46 @@ class DistanceMatrix(Artifact):
         data.write(blob)
         return blob.getvalue()
 
-@qiime.register_type("UniFrac distance matrix")
+@qiime.register_type
 class UniFracDistanceMatrix(DistanceMatrix):
     """..."""
-    pass
+    name = "UniFrac distance matrix"
 
-@qiime.register_type("bray-curtis distance matrix")
+@qiime.register_type
 class BrayCurtisDistanceMatrix(DistanceMatrix):
     """---"""
-    pass
+    name = "bray-curtis distance matrix"
 
-@qiime.register_type("contingency table")
+@qiime.register_type
 class ContingencyTable(Artifact):
     """2-D table of observation counts within each sample."""
-    pass
+    name = "contingency table"
 
-@qiime.register_type("otu table")
+@qiime.register_type
 class OTUTable(ContingencyTable):
     """OTU table"""
-    pass
+    name = "OTU table"
 
 # TODO this hierarchy probably isn't the best way to handle this, but useful
 # for testing multiple inheritance
 
-@qiime.register_type("rarefied table")
+@qiime.register_type
 class RarefiedTable(Artifact):
     """Rarefied table"""
-    pass
+    name = "rarefied table"
 
-@qiime.register_type("rarefied otu table")
+@qiime.register_type
 class RarefiedOTUTable(OTUTable, RarefiedTable):
     """Rarefied OTU table"""
-    pass
+    name = "rarefied OTU table"
 
 @qiime.register_method("Add distance matrices")
-def add_dms(a: DistanceMatrix, b: DistanceMatrix) -> DistanceMatrix:
+def add_dms(a: DistanceMatrix, b: DistanceMatrix, c: ChooseOne(Integer, [42, 100])) -> DistanceMatrix:
     """Add two distance matrices of the same shape."""
     if a.shape != b.shape:
         raise ValueError("Distance matrices must be the same shape in order to add them.")
+    print(c)
+    print(type(c))
     return skbio.DistanceMatrix(a.data + b.data)
 
 @qiime.register_method("other method")

@@ -9,5 +9,5 @@ class Executor(object):
         method = plugin_registry.get_plugin(method_uri).get_method(method_uri)
 
         study = self.job.study.id
-        artifact_uris = [a.artifact.uri for a in self.job.artifacts]
-        method(study, *artifact_uris)
+        inputs = dict([(i.key, i.value) for i in self.job.inputs])
+        method(study, **inputs)

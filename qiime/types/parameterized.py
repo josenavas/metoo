@@ -1,6 +1,7 @@
-from qiime.types import Parameterized
-import qiime.primitives as p
+from qiime.types import type_registry, Parameterized
+import qiime.types.primitives as p
 
+@type_registry.parameterized
 def Range(type_, min_, max_):
     _assert_valid_type(type_, [p.Integer, p.Decimal])
     _assert_valid_args(type_, min_, max_)
@@ -20,6 +21,7 @@ def Range(type_, min_, max_):
 
     return Range
 
+@type_registry.parameterized
 def List(type_):
     class List(Parameterized):
         subtype = type_
@@ -27,12 +29,15 @@ def List(type_):
 
         @classmethod
         def normalize(cls, data):
+            if not hasattr('__iter__', data):
+                data = (data,)
             return [cls.subtype.normalize(d) for d in data]
 
         @classmethod
         def load(cls, data):
             return [cls.subtype.load(d) for d in cls.normalize(data)]
 
+@type_registry.parameterized
 def ChooseOne(type_, options):
     _assert_valid_type(type_, [p.Integer, p.Decimal, p.String])
     _assert_valid_args(type_, *options)
@@ -52,6 +57,7 @@ def ChooseOne(type_, options):
 
     return ChooseOne
 
+@type_registry.parameterized
 def ChooseMany(type_, options):
     _assert_valid_type(type_, [p.Integer, p.Decimal, p.String])
     _assert_valid_args(type_, *options)
@@ -62,6 +68,9 @@ def ChooseMany(type_, options):
 
         @classmethod
         def normalize(cls, data):
+            if not hasattr('__iter__', data):
+                data = (data,)
+
             norm = []
             for d in data:
                 d = cls.subtype.normalize(d)
@@ -79,9 +88,8 @@ def ChooseMany(type_, options):
 
 def _assert_valid_args(type_, *args):
     for arg in args:
-        if not type_.validate(arg):
-            raise ValueError()
+        type_.normalize(arg)
 
 def _assert_valid_type(type_, valid_types):
-    if not any(map(lambda x: isinstance(type_, x), valid_types)):
-        raise TypeError()
+    if not any(map(lambda x: issubclass(type_, x), valid_types)):
+        raise TypeError("Invalid type %r." % type(type_))

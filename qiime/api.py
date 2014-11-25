@@ -5,7 +5,7 @@ from qiime.core.executor import Executor
 from qiime.core.registry import plugin_registry
 from qiime.core.tornadotools import route, GET, POST, PUT, DELETE, yield_urls
 from qiime.core.util import extract_artifact_id
-from qiime.db import Artifact, ArtifactProxy, ArtifactType, Study, Workflow, Job, JobInputArtifact
+from qiime.db import Artifact, ArtifactProxy, Type, Study, Workflow, WorkflowInput, Job, JobInput
 from qiime.types import type_registry
 
 def get_urls():
@@ -48,11 +48,7 @@ def method_info(request, plugin_name, method_name):
         'uri': method.uri,
         'name': method.name,
         'help': method.docstring,
-        'annotations': {
-            'artifacts': [],  # TODO (parameterized) artifacts (defined in qiime.plugins.[plugin-name].artifacts)
-            'parameters': {}, # TODO (parameterized) primitives (defined in qiime.types.primitives|parameterized)
-            'return': []      # TODO (parameterized) artifacts
-        }
+        'annotations': {name: cls.annotation() for name, cls in method.annotations.items() if name != 'return'} # TODO plz fix me
     }
 
 @route('/system/plugins/all/types', GET, params=['format'])
@@ -71,19 +67,21 @@ def list_plugin_types(request, plugin_name, format=None):
             'types': [t.uri for t in types]
         }
     elif format == 'tree':
-        cls_tree = inspect.getclasstree([t.cls for t in types])
+        cls_tree = inspect.getclasstree([t for t in types])
         return _list_tree_to_dict_tree(cls_tree) # TODO use better JSON tree representation
     else:
         raise ValueError("Unrecognized format: %r" % format)
 
 @route('/system/plugins/:plugin/types/:type', GET)
-def plugin_type_info(request, plugin_name, type_name):
-    type_ = plugin_registry.get_plugin(plugin_name).get_type(type_name)
+@route('/system/types/primitives/:type', GET)
+@route('/system/types/parameterized/:type', GET)
+def type_info(request, *_):
+    type_ = type_registry.get_type(request.path)
 
     return {
         'uri': type_.uri,
         'name': type_.name,
-        'description': type_.description
+        'description': type_.__doc__
     }
 
 @route('/system/types/primitives', GET)
@@ -92,32 +90,12 @@ def list_primitive_types(request):
         'types': [t.uri for t in type_registry.get_primitive_types().values()]
     }
 
-@route('/system/types/primitives/:type', GET)
-def primitive_type_info(request, type_name):
-    type_ = type_registry.get_primitive_type(type_name)
-
-    return {
-        'uri': type_.uri,
-        'name': type_.name,
-        'description': type_.description
-    }
-
 @route('/system/types/parameterized', GET)
 def list_parameterized_types(request):
     return {
         'types': [t.uri for t in
                   type_registry.get_parameterized_types().values()]
     }
-
-#@route('/system/types/parameterized/:type', GET)
-#def parameterized_type_info(type_name):
-#    type_ = type_registry.get_parameterized_type(type_name)
-#
-#    return {
-#        'uri': type_.uri,
-#        'name': type_.name,
-#        'description': type_.description
-#    }
 
 @route('/studies', GET)
 def list_studies(request):
@@ -170,7 +148,7 @@ def create_artifact(request, study_id, name, artifact_type):
 
     # TODO remove when using postgresql and foreign keys are actually supported
     study = Study.get(id=study_id)
-    type_ = ArtifactType.get(uri=artifact_type)
+    type_ = Type.get(uri=artifact_type)
     artifact = Artifact(type=type_, data=data, study=study)
     artifact.save()
 
@@ -258,16 +236,14 @@ def list_jobs(request, study_id, status=None):
         'uris': [j.uri for j in jobs]
     }
 
-@route('/studies/:study/jobs', POST, params=['workflow', 'method', 'artifacts', 'parameters'])
-def create_job(request, study_id, workflow=None, method=None, artifacts=None, parameters=None):
+@route('/studies/:study/jobs', POST, params=['workflow', 'method'])
+def create_job(request, study_id, workflow=None, method=None):
     if workflow is None and method is None:
         raise Exception()
     if method is not None and workflow is not None:
         raise Exception()
 
     if workflow is not None:
-        raise NotImplementedError()
-    if parameters is not None:
         raise NotImplementedError()
 
     if method is not None:
@@ -279,17 +255,23 @@ def create_job(request, study_id, workflow=None, method=None, artifacts=None, pa
         job = Job(workflow=workflow, study=study_id)
         job.save()
 
-        if artifacts is not None:
-            # TODO using a comma-separated list of artifact uris. need to find
-            # a better way to handle this (we can't call get_arguments() in
-            # this context)
-            artifacts = [a.strip() for a in artifacts.split(',')]
-            for idx, artifact_uri in enumerate(artifacts):
-                artifact_id = extract_artifact_id(artifact_uri)
-                artifact = ArtifactProxy.get(id=artifact_id)
-                artifact_input = JobInputArtifact(order=idx, artifact=artifact,
-                                                  job=job)
-                artifact_input.save()
+        method = plugin_registry.get_plugin(method).get_method(method)
+
+        # TODO fix this paypal hack
+        inputs = {}
+        for param in request.arguments:
+            # :tears:
+            if param.startswith('input_'):
+                _, key = param.split('input_')
+                value = request.arguments[param]
+
+                if len(value) == 1:
+                    value = value[0]
+                inputs[key] = value
+
+        for key, value in inputs.items():
+            job_input = JobInput(key=key, value=value, job=job)
+            job_input.save()
 
         # TODO we don't want to fire off the job here b/c this will block
         # tornado
@@ -315,7 +297,7 @@ def job_info(request, study_id, job_id, subscribe=None): # TODO handle SSE
         'submitted': str(job.submitted),
         'completed': completed,
         'workflow': job.workflow.uri,
-        'artifacts': [a.artifact.uri for a in job.artifacts]
+        'inputs': {i.key: i.value.decode('utf-8') for i in job.inputs}
     }
 
 # TODO handle updating downstream parts of the workflow
