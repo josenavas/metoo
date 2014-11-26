@@ -8,7 +8,9 @@ class Method(object):
 
         if type(annotations['return']) != tuple:
             annotations['return'] = (annotations['return'],)
-        self.annotations = annotations
+
+        self.outputs = annotations.pop('return')
+        self.inputs = annotations
 
         spec = inspect.getfullargspec(function)
         if spec.defaults:
@@ -28,10 +30,10 @@ class Method(object):
         if type(results) != tuple:
             results = (results,)
 
-        if len(results) != len(self.annotations['return']):
+        if len(results) != len(self.outputs):
             raise Exception()
 
-        for result_idx, (result, result_type) in enumerate(zip(results, self.annotations['return'])):
+        for result_idx, (result, result_type) in enumerate(zip(results, self.outputs)):
             if not isinstance(result, result_type.data_type):
                 raise TypeError()
 
@@ -44,7 +46,7 @@ class Method(object):
                              (len(self._input_names), len(kwargs)))
         resolved_kwargs = {}
         for input_name in self._input_names:
-            type_ = self.annotations[input_name]
+            type_ = self.inputs[input_name]
 
             if input_name in kwargs:
                 resolved_kwargs[input_name] = type_.load(kwargs[input_name])
