@@ -6,7 +6,7 @@ import qiime.types.primitives as p
 @type_registry.parameterized
 def Range(type_, min_, max_):
     _assert_valid_type(type_, [p.Integer, p.Decimal])
-    _assert_valid_args(type_, min_, max_)
+    _assert_valid_args(type_, [min_, max_])
 
     class Range(Parameterized):
         subtype = type_
@@ -43,11 +43,11 @@ def List(type_):
 @type_registry.parameterized
 def ChooseOne(type_, options):
     _assert_valid_type(type_, [p.Integer, p.Decimal, p.String])
-    _assert_valid_args(type_, *options)
+    _assert_valid_args(type_, options)
 
     class ChooseOne(Parameterized):
         subtype = type_
-        args = (options,)
+        args = options
 
         @classmethod
         def normalize(cls, data):
@@ -63,11 +63,11 @@ def ChooseOne(type_, options):
 @type_registry.parameterized
 def ChooseMany(type_, options):
     _assert_valid_type(type_, [p.Integer, p.Decimal, p.String])
-    _assert_valid_args(type_, *options)
+    _assert_valid_args(type_, options)
 
     class ChooseMany(Parameterized):
         subtype = type_
-        args = (options,)
+        args = options
 
         @classmethod
         def normalize(cls, data):
@@ -89,7 +89,7 @@ def ChooseMany(type_, options):
 
     return ChooseMany
 
-def _assert_valid_args(type_, *args):
+def _assert_valid_args(type_, args):
     for arg in args:
         type_.normalize(arg)
 
