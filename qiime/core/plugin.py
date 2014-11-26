@@ -22,6 +22,7 @@ class Plugin(object):
             self._methods[fn_name] = Method(function, uri, name,
                                             function.__doc__,
                                             function.__annotations__)
+
             return function
         return decorator
 

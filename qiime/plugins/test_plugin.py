@@ -66,9 +66,6 @@ def add_dms(a: DistanceMatrix,  c: ChooseMany(Integer, [10, 42, 100]), b: Distan
     print(type(c))
     return skbio.DistanceMatrix(a.data + b.data)
 
-@qiime.register_method("other method")
-def something_else(a: int, b: str) -> dict:
-    pass
 
 # @qiime.register_workflow("some workflow")
 # def some_workflow(Step,

@@ -1,10 +1,15 @@
 import inspect
+from qiime.types import BaseType
 
 class Method(object):
     def __init__(self, function, uri, name, docstring, annotations):
         self.uri = uri
         self.name = name
         self.docstring = docstring
+
+        for key, annotation in annotations.items():
+            if not issubclass(annotation, BaseType):
+                raise TypeError("Annotation for %r in %r is not a registered type." % (key, function.__name__))
 
         if type(annotations['return']) != tuple:
             annotations['return'] = (annotations['return'],)
