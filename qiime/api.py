@@ -48,7 +48,8 @@ def method_info(request, plugin_name, method_name):
         'uri': method.uri,
         'name': method.name,
         'help': method.docstring,
-        'annotations': {name: cls.annotation() for name, cls in method.annotations.items() if name != 'return'} # TODO plz fix me
+        'inputs': {name: cls.annotation() for name, cls in method.annotations.items() if name != 'return'},
+        'outputs': [cls.annotation() for cls in method.annotations['return']]
     }
 
 @route('/system/plugins/all/types', GET, params=['format'])

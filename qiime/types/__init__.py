@@ -56,14 +56,15 @@ class Parameterized(BaseType, metaclass=ABCMeta):
         return {
             'uri': cls.uri,
             'content': 'parameterized',
-            'subtype': cls.subtype.uri,
+            'subtype': cls.subtype.annotation(),
             'args': cls.args
         }
 
 class Artifact(BaseType, metaclass=ABCMeta):
     @classmethod
     def normalize(cls, uri):
-        uri = uri.decode('utf-8')
+        if not isinstance(uri, str):
+            uri = uri.decode('utf-8')
         artifact_id = extract_artifact_id(uri)
         type_uri = db.ArtifactProxy.get(id=artifact_id).artifact.type.uri
 
@@ -162,7 +163,7 @@ class _TypeRegistry(object):
             param_type.uri = uri
             param_type.name = name
             return param_type
-        
+
         wrapped_factory.uri = uri
         wrapped_factory.name = name
 

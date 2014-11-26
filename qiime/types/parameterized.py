@@ -38,6 +38,7 @@ def List(type_):
         @classmethod
         def load(cls, data):
             return [cls.subtype.load(d) for d in cls.normalize(data)]
+    return List
 
 @type_registry.parameterized
 def ChooseOne(type_, options):

@@ -2,7 +2,7 @@ from io import StringIO
 
 import skbio
 
-from qiime.types.parameterized import ChooseMany
+from qiime.types.parameterized import ChooseMany, List
 from qiime.types.primitives import Integer
 
 from qiime.types import Artifact
@@ -58,7 +58,7 @@ class RarefiedOTUTable(OTUTable, RarefiedTable):
     name = "rarefied OTU table"
 
 @qiime.register_method("Add distance matrices")
-def add_dms(a: DistanceMatrix, b: DistanceMatrix, c: ChooseMany(Integer, [10, 42, 100])) -> DistanceMatrix:
+def add_dms(a: DistanceMatrix,  c: ChooseMany(Integer, [10, 42, 100]), b: DistanceMatrix='/studies/1/artifacts/2') -> DistanceMatrix:
     """Add two distance matrices of the same shape."""
     if a.shape != b.shape:
         raise ValueError("Distance matrices must be the same shape in order to add them.")
