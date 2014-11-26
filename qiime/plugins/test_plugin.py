@@ -2,7 +2,7 @@ from io import StringIO
 
 import skbio
 
-from qiime.types.parameterized import ChooseOne
+from qiime.types.parameterized import ChooseMany
 from qiime.types.primitives import Integer
 
 from qiime.types import Artifact
@@ -58,7 +58,7 @@ class RarefiedOTUTable(OTUTable, RarefiedTable):
     name = "rarefied OTU table"
 
 @qiime.register_method("Add distance matrices")
-def add_dms(a: DistanceMatrix, b: DistanceMatrix, c: ChooseOne(Integer, [42, 100])) -> DistanceMatrix:
+def add_dms(a: DistanceMatrix, b: DistanceMatrix, c: ChooseMany(Integer, [10, 42, 100])) -> DistanceMatrix:
     """Add two distance matrices of the same shape."""
     if a.shape != b.shape:
         raise ValueError("Distance matrices must be the same shape in order to add them.")
@@ -81,7 +81,7 @@ def something_else(a: int, b: str) -> dict:
 #     a = Step('org.qiime.plugins.qiime.methods.some_method', dm, name=param1)
 #     b = Step('org.qiime.plugins.qiime.methods.something_else', other, p2=2)
 #     c = Step('org.qiime.plugins.qiime.methods.final_step', a[0], b[0])
-# 
+#
 #     return a[1], c[0]
 #
 # @qiime.register_parallel("some parallel")

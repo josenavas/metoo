@@ -74,10 +74,13 @@ class Job(BaseModel):
 
 class JobInput(BaseModel):
     class Meta:
-        indexes = [(('key', 'job'), True)]
+        indexes = [(('job', 'key', 'order'), True)]
+        order_by = ('job', 'key', 'order')
+
 
     key = pw.CharField()
     value = pw.BlobField()
+    order = pw.IntegerField()
     job = pw.ForeignKeyField(Job, related_name='inputs')
 
 def initialize_db():

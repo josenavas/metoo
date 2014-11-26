@@ -1,4 +1,6 @@
 from qiime.types import type_registry, Parameterized
+from qiime.core.util import is_list
+
 import qiime.types.primitives as p
 
 @type_registry.parameterized
@@ -29,7 +31,7 @@ def List(type_):
 
         @classmethod
         def normalize(cls, data):
-            if not hasattr('__iter__', data):
+            if not is_list(data):
                 data = (data,)
             return [cls.subtype.normalize(d) for d in data]
 
@@ -68,7 +70,7 @@ def ChooseMany(type_, options):
 
         @classmethod
         def normalize(cls, data):
-            if not hasattr('__iter__', data):
+            if not is_list(data):
                 data = (data,)
 
             norm = []
@@ -79,7 +81,7 @@ def ChooseMany(type_, options):
                     raise Exception()
                 norm.append(d)
             return norm
-        
+
         @classmethod
         def load(cls, data):
             return [cls.subtype.load(d) for d in cls.normalize(data)]

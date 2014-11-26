@@ -258,20 +258,14 @@ def create_job(request, study_id, workflow=None, method=None):
         method = plugin_registry.get_plugin(method).get_method(method)
 
         # TODO fix this paypal hack
-        inputs = {}
         for param in request.arguments:
             # :tears:
             if param.startswith('input_'):
                 _, key = param.split('input_')
                 value = request.arguments[param]
-
-                if len(value) == 1:
-                    value = value[0]
-                inputs[key] = value
-
-        for key, value in inputs.items():
-            job_input = JobInput(key=key, value=value, job=job)
-            job_input.save()
+                for i, v in enumerate(value):
+                    job_input = JobInput(key=key, value=v, job=job, order=i)
+                    job_input.save()
 
         # TODO we don't want to fire off the job here b/c this will block
         # tornado
