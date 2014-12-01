@@ -7,15 +7,24 @@ class Method(object):
         self.name = name
         self.docstring = docstring
 
-        for key, annotation in annotations.items():
-            if not issubclass(annotation, BaseType):
-                raise TypeError("Annotation for %r in %r is not a registered type." % (key, function.__name__))
-
         if type(annotations['return']) != tuple:
             annotations['return'] = (annotations['return'],)
 
-        self.outputs = annotations.pop('return')
-        self.inputs = annotations
+        outputs = annotations.pop('return')
+        inputs = annotations
+
+        for key, annotation in inputs.items():
+            if not issubclass(annotation, BaseType):
+                raise TypeError("Annotation for %r in %r is not a registered type." % (key, function.__name__))
+
+
+        for annotation in outputs:
+            if not issubclass(annotation, BaseType):
+                raise TypeError("Return annotation %r in %r is not a registered type." % (annotation, function.__name__))
+
+
+        self.outputs = outputs
+        self.inputs = inputs
 
         spec = inspect.getfullargspec(function)
         if spec.defaults:
@@ -38,12 +47,9 @@ class Method(object):
         if len(results) != len(self.outputs):
             raise Exception()
 
-        for result_idx, (result, result_type) in enumerate(zip(results, self.outputs)):
-            if not isinstance(result, result_type.data_type):
-                raise TypeError()
+        return [t.instantiate(r, study, '%s output %d' % (self.name, i))
+                for i, (t, r) in enumerate(zip(self.outputs, results))]
 
-            # TODO handle output naming better
-            result_type.save(result, study, '%s output %d' % (self.name, result_idx + 1))
 
     def _resolve_kwargs(self, kwargs):
         if len(kwargs) > len(self._input_names):
@@ -54,9 +60,9 @@ class Method(object):
             type_ = self.inputs[input_name]
 
             if input_name in kwargs:
-                resolved_kwargs[input_name] = type_.load(kwargs[input_name])
+                resolved_kwargs[input_name] = type_.dereference(kwargs[input_name])
             elif input_name in self._defaults:
-                resolved_kwargs[input_name] = type_.load(self._defaults[input_name])
+                resolved_kwargs[input_name] = type_.dereference(self._defaults[input_name])
             else:
                 raise TypeError("Missing input %r." % input_name)
         return resolved_kwargs

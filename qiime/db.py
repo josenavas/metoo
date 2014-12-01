@@ -83,10 +83,32 @@ class JobInput(BaseModel):
     order = pw.IntegerField()
     job = pw.ForeignKeyField(Job, related_name='inputs')
 
+class OrderedResult(BaseModel):
+    order = pw.IntegerField()
+    ordered_result = pw.ForeignKeyField('self', null=True, constraints=[
+        pw.Check(
+            '(ordered_result_id IS NULL AND artifact_id IS NULL AND primitive IS NOT NULL) OR '
+            '(ordered_result_id IS NULL AND artifact_id IS NOT NULL AND primitive IS NULL) OR '
+            '(ordered_result_id IS NOT NULL AND artifact_id IS NULL AND primitive IS NULL)'
+        )
+    ])
+    artifact = pw.ForeignKeyField(ArtifactProxy, null=True)
+    primitive = pw.BlobField(null=True)
+
+class JobOutput(BaseModel):
+    class Meta:
+        indexes = [(('job', 'order'), True)]
+
+    job = pw.ForeignKeyField(Job)
+    order = pw.IntegerField()
+    result = pw.ForeignKeyField(OrderedResult)
+
 def initialize_db():
     db.connect()
     db.create_tables(
-        [Study, Artifact, ArtifactProxy, Type, Workflow, Job, JobInput], True)
+        [Study, Artifact, ArtifactProxy,
+         Type, Workflow, Job, JobInput,
+         JobOutput, OrderedResult], True)
     _populate_type_table()
 
 def _populate_type_table():

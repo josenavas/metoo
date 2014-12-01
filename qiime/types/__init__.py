@@ -6,17 +6,43 @@ import qiime.db as db
 from qiime.core.util import extract_artifact_id, is_uri, get_feature_from_uri
 
 class BaseType(object, metaclass=ABCMeta):
+    # These are set at registration.
     name = None
     uri = None
 
     @classmethod
     @abstractmethod
-    def normalize(cls, data):
+    def dereference(cls, reference):
+        """Pass by value dereference producing an instance of the bound type.
+
+        The bound type is the real object expected by a method annotated by
+        this class.
+
+        Basic type checking should be performed here via normalize.
+        """
         pass
 
     @classmethod
     @abstractmethod
-    def load(cls, data):
+    def instantiate(cls, argument, study, name):
+        """Instantiate the results of a method on the database.
+
+        Basic type checking should be performed here via check_type.
+        """
+        pass
+
+    @classmethod
+    @abstractmethod
+    def normalize(cls, reference):
+        """Normalize a reference and validate the reference is of correct type.
+
+        """
+
+
+    @classmethod
+    @abstractmethod
+    def check_type(cls, argument):
+        """Check that an instance of the bound type is of the correct type."""
         pass
 
     @classmethod
@@ -25,6 +51,9 @@ class BaseType(object, metaclass=ABCMeta):
         pass
 
 class Primitive(BaseType):
+    """Primitives are values that are encoded entirely in the reference itself.
+
+    """
     @classmethod
     def annotation(cls):
         return {
@@ -32,7 +61,27 @@ class Primitive(BaseType):
             'content': 'primitive'
         }
 
+    @classmethod
+    def check_type(cls, reference):
+        cls.normalize(reference)
+
+    @classmethod
+    def instantiate(cls, argument, *_):
+        # By definition primitives can encode their value in their own
+        # reference, so instantiate is actually just a dereference.
+        return cls.dereference(argument)
+
+    @classmethod
+    def dereference(cls, reference):
+        reference = cls.normalize(reference)
+        return reference
+
 class Parameterized(BaseType, metaclass=ABCMeta):
+    """Parameterized types are produced from type factories.
+
+    They encode some restriction on the type's domain or generalize it to a
+    restricted collection.
+    """
     # these properties will be defined by the parameterized type factory
 
     @property
@@ -48,10 +97,6 @@ class Parameterized(BaseType, metaclass=ABCMeta):
         pass
 
     @classmethod
-    def load(cls, data):
-        return cls.subtype.load(cls.normalize(data))
-
-    @classmethod
     def annotation(cls):
         return {
             'uri': cls.uri,
@@ -61,17 +106,45 @@ class Parameterized(BaseType, metaclass=ABCMeta):
         }
 
 class Artifact(BaseType, metaclass=ABCMeta):
+    """Basic units of input/output in a study not captured by a primitive.
+
+    """
     @classmethod
-    def normalize(cls, uri):
-        if not isinstance(uri, str):
-            uri = uri.decode('utf-8')
+    def dereference(cls, reference):
+        uri = cls.normalize(reference)
         artifact_id = extract_artifact_id(uri)
+        artifact = db.ArtifactProxy.get(id=artifact_id)
+        return cls.load(artifact.artifact.data)
+
+    @classmethod
+    def instantiate(cls, argument, study, name):
+        cls.check_type(argument)
+        type_ = db.Type.get(uri=cls.uri)
+        artifact = db.Artifact(type=type_, data=cls.save(argument), study=study)
+        artifact.save()
+
+        artifact_proxy = db.ArtifactProxy(name=name, artifact=artifact,
+                                          study=study)
+        artifact_proxy.save()
+        return artifact_proxy.uri
+
+    @classmethod
+    def normalize(cls, reference):
+        if not isinstance(reference, str):
+            reference = reference.decode('utf-8')
+        artifact_id = extract_artifact_id(reference)
         type_uri = db.ArtifactProxy.get(id=artifact_id).artifact.type.uri
 
         if type_uri != cls.uri:
-            raise Exception()
+            raise TypeError()
 
-        return uri
+        return reference
+
+    @classmethod
+    def check_type(cls, argument):
+        if not isinstance(argument, cls.data_type):
+            raise TypeError("%r is not an instance of %r." % (argument,
+                                                              cls.data_type))
 
     @classmethod
     def annotation(cls):
@@ -84,34 +157,25 @@ class Artifact(BaseType, metaclass=ABCMeta):
     @classmethod
     @abstractmethod
     def data_type(cls):
+        """Developer-defined property for describing the bound type."""
         pass
-
-    @classmethod
-    def load(cls, uri):
-        uri = cls.normalize(uri)
-        artifact_id = extract_artifact_id(uri)
-        artifact = db.ArtifactProxy.get(id=artifact_id)
-        return cls.from_blob(artifact.artifact.data)
 
     @classmethod
     @abstractmethod
-    def from_blob(cls, blob):
+    def load(cls, blob):
+        """Load an instance from database.
+
+        """
         pass
-
-    @classmethod
-    def save(cls, data, study, name):
-        type_ = db.Type.get(uri=cls.uri)
-        artifact = db.Artifact(type=type_, data=cls.to_blob(data), study=study)
-        artifact.save()
-
-        artifact_proxy = db.ArtifactProxy(name=name, artifact=artifact,
-                                          study=study)
-        artifact_proxy.save()
 
     @classmethod
     @abstractmethod
-    def to_blob(cls, data):
+    def save(cls, blob):
+        """Save an instance to the database.
+
+        """
         pass
+
 
 class _TypeRegistry(object):
     def __init__(self):

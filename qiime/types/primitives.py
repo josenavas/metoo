@@ -4,11 +4,11 @@ def primitive_factory(class_name, primitive):
     class _(Primitive):
         @classmethod
         def normalize(cls, data):
-            return primitive(data)
+            try:
+                return primitive(data)
+            except ValueError:
+                raise TypeError()
 
-        @classmethod
-        def load(cls, data):
-            return cls.normalize(data)
     _.__name__ = class_name
     type_registry.primitive(_)
     return _

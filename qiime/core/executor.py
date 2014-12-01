@@ -7,19 +7,24 @@ class Executor(object):
 
     def __call__(self):
         method_uri = self.job.workflow.template # TODO currently the template is just the method
+
         method = plugin_registry.get_plugin(method_uri).get_method(method_uri)
-
         study = self.job.study.id
+        inputs = listify_duplicate_keys(self.job.inputs)
 
-        inputs = {}
-        for input_ in self.job.inputs:
-            key = input_.key
-            if key in inputs:
-                if is_list(inputs[key]):
-                    inputs[key].append(input_.value)
-                else:
-                    inputs[key] = [inputs[key], input_.value]
+        results = method(study, **inputs)
+        print(results)
+
+
+def listify_duplicate_keys(job_inputs):
+    inputs = {}
+    for input_ in job_inputs:
+        key = input_.key
+        if key in inputs:
+            if is_list(inputs[key]):
+                inputs[key].append(input_.value)
             else:
-                inputs[key] = input_.value
-
-        method(study, **inputs)
+                inputs[key] = [inputs[key], input_.value]
+        else:
+            inputs[key] = input_.value
+    return inputs

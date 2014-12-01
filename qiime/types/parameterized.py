@@ -13,13 +13,27 @@ def Range(type_, min_, max_):
         args = (min_, max_)
 
         @classmethod
-        def normalize(cls, data):
-            data = cls.subtype.normalize(data)
+        def dereference(cls, reference):
+            reference = cls.normalize(reference)
+            return cls.subtype.dereference(reference)
 
-            if not (min_ <= data < max_):
-                raise Exception()
+        @classmethod
+        def instantiate(cls, argument, *extras):
+            cls.check_type(argument)
+            return cls.subtype.instantiate(argument, *extras)
 
-            return data
+        @classmethod
+        def normalize(cls, reference):
+            reference = cls.subtype.normalize(reference)
+            if not (min_ <= reference < max_):
+                raise TypeError('Not in range.')
+            return reference
+
+        @classmethod
+        def check_type(cls, argument):
+            cls.subtype.check_type(argument)
+            if not (min_ <= argument < max_):
+                raise TypeError('Not in range.')
 
     return Range
 
@@ -30,62 +44,117 @@ def List(type_):
         args = ()
 
         @classmethod
-        def normalize(cls, data):
-            if not is_list(data):
-                data = (data,)
-            return [cls.subtype.normalize(d) for d in data]
+        def dereference(cls, reference):
+            return [cls.subtype.dereference(r) for r in
+                    cls.normalize(reference)]
 
         @classmethod
-        def load(cls, data):
-            return [cls.subtype.load(d) for d in cls.normalize(data)]
+        def instantiate(cls, argument, study, name):
+            cls.check_type(argument)
+            return [cls.subtype.instantiate(a, study, '%s_%d' % (name, i))
+                    for i, a in enumerate(argument)]
+
+        @classmethod
+        def normalize(cls, reference):
+            if not is_list(reference):
+                reference = (reference,)
+            return [cls.subtype.normalize(r) for r in reference]
+
+        @classmethod
+        def check_type(cls, argument):
+            if not is_list(argument):
+                raise TypeError("not a list")
+            [cls.subtype.check_type(a) for a in argument]
+
     return List
 
 @type_registry.parameterized
 def ChooseOne(type_, options):
-    _assert_valid_type(type_, [p.Integer, p.Decimal, p.String])
     _assert_valid_args(type_, options)
+    opt_set = set(options)
+    if len(options) != len(opt_set):
+        raise TypeError("Duplicate option in %r." % options)
+    options = opt_set
 
     class ChooseOne(Parameterized):
         subtype = type_
         args = options
 
         @classmethod
-        def normalize(cls, data):
-            data = cls.subtype.normalize(data)
+        def dereference(cls, reference):
+            reference = cls.normalize(reference)
+            return cls.subtype.dereference(reference)
 
-            if data not in options:
-                raise Exception()
+        @classmethod
+        def instantiate(cls, argument, *extras):
+            cls.check_type(argument)
+            return cls.subtype.instantiate(argument, *extras)
 
-            return data
+        @classmethod
+        def normalize(cls, reference):
+            reference = cls.subtype.normalize(reference)
+            if reference not in options:
+                raise TypeError("%r is not a member of %r." % (reference,
+                                                               options))
+            return reference
+
+        @classmethod
+        def check_type(cls, argument):
+            cls.subtype.check_type(argument)
+
+            if argument not in options:
+                raise TypeError("%r is not a member of %r." % (argument,
+                                                               options))
 
     return ChooseOne
 
 @type_registry.parameterized
 def ChooseMany(type_, options):
-    _assert_valid_type(type_, [p.Integer, p.Decimal, p.String])
     _assert_valid_args(type_, options)
+    opt_set = set(options)
+    if len(options) != len(opt_set):
+        raise TypeError("Duplicate option in %r." % options)
+    options = opt_set
 
     class ChooseMany(Parameterized):
         subtype = type_
         args = options
 
         @classmethod
-        def normalize(cls, data):
-            if not is_list(data):
-                data = (data,)
-
-            norm = []
-            for d in data:
-                d = cls.subtype.normalize(d)
-
-                if d not in options:
-                    raise Exception()
-                norm.append(d)
-            return norm
+        def dereference(cls, reference):
+            return [cls.subtype.dereference(r) for r in
+                    cls.normalize(reference)]
 
         @classmethod
-        def load(cls, data):
-            return [cls.subtype.load(d) for d in cls.normalize(data)]
+        def instantiate(cls, argument, study, name):
+            cls.check_type(argument)
+            return [cls.subtype.instantiate(a, study, "%s_%d" % (name, i))
+                    for i, a in enumerate(argument)]
+
+        @classmethod
+        def normalize(cls, reference):
+            print(reference)
+            if not is_list(reference):
+                reference = (reference,)
+            results = []
+            for r in reference:
+                r = cls.subtype.normalize(r)
+                if r not in options:
+                    raise TypeError(
+                        "%r is not a member of %r." % (r, options))
+                results.append(r)
+            return results
+
+        @classmethod
+        def check_type(cls, argument):
+            if not is_list(argument):
+                raise TypeError("not a list")
+
+            for a in argument:
+                cls.subtype.check_type(a)
+                if a not in options:
+                    raise TypeError(
+                        "%r is not a member of %r." % (a, options))
 
     return ChooseMany
 

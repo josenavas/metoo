@@ -3,7 +3,7 @@ from io import StringIO
 import skbio
 
 from qiime.types.parameterized import ChooseMany, List
-from qiime.types.primitives import Integer
+from qiime.types.primitives import Integer, Decimal
 
 from qiime.types import Artifact
 from . import qiime
@@ -15,11 +15,11 @@ class DistanceMatrix(Artifact):
     data_type = skbio.DistanceMatrix
 
     @classmethod
-    def from_blob(cls, blob):
+    def load(cls, blob):
         return cls.data_type.read(StringIO(blob.decode('utf-8')))
 
     @classmethod
-    def to_blob(cls, data):
+    def save(cls, data):
         blob = StringIO()
         data.write(blob)
         return blob.getvalue()
@@ -58,13 +58,16 @@ class RarefiedOTUTable(OTUTable, RarefiedTable):
     name = "rarefied OTU table"
 
 @qiime.register_method("Add distance matrices")
-def add_dms(a: DistanceMatrix,  c: ChooseMany(Integer, [10, 42, 100]), b: DistanceMatrix='/studies/1/artifacts/2') -> DistanceMatrix:
+def add_dms(a: DistanceMatrix,
+            c: ChooseMany(Integer, [10, 42, 100]),
+            b: DistanceMatrix='/studies/1/artifacts/2'
+            ) -> (DistanceMatrix, ChooseMany(Integer, [1, 2, 3, 42]), Decimal):
     """Add two distance matrices of the same shape."""
     if a.shape != b.shape:
         raise ValueError("Distance matrices must be the same shape in order to add them.")
     print(c)
     print(type(c))
-    return skbio.DistanceMatrix(a.data + b.data)
+    return skbio.DistanceMatrix(a.data + b.data), [1, 2, 3], 4.1
 
 
 # @qiime.register_workflow("some workflow")
