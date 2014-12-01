@@ -5,13 +5,15 @@ from importlib import import_module
 import qiime.db as db
 from qiime.core.util import extract_artifact_id, is_uri, get_feature_from_uri
 
-class BaseType(object, metaclass=ABCMeta):
+class BaseType(object):
     # These are set at registration.
     name = None
     uri = None
 
+    def __init__(self, *args, **kwargs):
+        raise Exception("Do not instantiate this.")
+
     @classmethod
-    @abstractmethod
     def dereference(cls, reference):
         """Pass by value dereference producing an instance of the bound type.
 
@@ -20,35 +22,32 @@ class BaseType(object, metaclass=ABCMeta):
 
         Basic type checking should be performed here via normalize.
         """
-        pass
+        raise NotImplementedError("`dereference` must be implemented by a subclass.")
 
     @classmethod
-    @abstractmethod
     def instantiate(cls, argument, study, name):
         """Instantiate the results of a method on the database.
 
         Basic type checking should be performed here via check_type.
         """
-        pass
+        raise NotImplementedError("`instantiate` must be implemented by a subclass.")
 
     @classmethod
-    @abstractmethod
     def normalize(cls, reference):
         """Normalize a reference and validate the reference is of correct type.
 
         """
+        raise NotImplementedError("`normalize` must be implemented by a subclass.")
 
 
     @classmethod
-    @abstractmethod
     def check_type(cls, argument):
         """Check that an instance of the bound type is of the correct type."""
-        pass
+        raise NotImplementedError("`check_type` must be implemented by a subclass.")
 
     @classmethod
-    @abstractmethod
     def annotation(cls):
-        pass
+        raise NotImplementedError("`annotation` must be implemented by a subclass.")
 
 class Primitive(BaseType):
     """Primitives are values that are encoded entirely in the reference itself.
@@ -76,7 +75,7 @@ class Primitive(BaseType):
         reference = cls.normalize(reference)
         return reference
 
-class Parameterized(BaseType, metaclass=ABCMeta):
+class Parameterized(BaseType):
     """Parameterized types are produced from type factories.
 
     They encode some restriction on the type's domain or generalize it to a
@@ -86,15 +85,14 @@ class Parameterized(BaseType, metaclass=ABCMeta):
 
     @property
     @classmethod
-    @abstractmethod
     def subtype(cls):
-        pass
+        raise NotImplementedError("`subtype` must be set by a subclass.")
+
 
     @property
     @classmethod
-    @abstractmethod
     def args(cls):
-        pass
+        raise NotImplementedError("`args` must be set by a subclass.")
 
     @classmethod
     def annotation(cls):
@@ -105,7 +103,7 @@ class Parameterized(BaseType, metaclass=ABCMeta):
             'args': cls.args
         }
 
-class Artifact(BaseType, metaclass=ABCMeta):
+class Artifact(BaseType):
     """Basic units of input/output in a study not captured by a primitive.
 
     """
@@ -155,26 +153,23 @@ class Artifact(BaseType, metaclass=ABCMeta):
 
     @property
     @classmethod
-    @abstractmethod
     def data_type(cls):
         """Developer-defined property for describing the bound type."""
-        pass
+        raise NotImplementedError("`data_type` must be set by a subclass.")
 
     @classmethod
-    @abstractmethod
     def load(cls, blob):
         """Load an instance from database.
 
         """
-        pass
+        raise NotImplementedError("`load` must be implemented by a subclass.")
 
     @classmethod
-    @abstractmethod
     def save(cls, blob):
         """Save an instance to the database.
 
         """
-        pass
+        raise NotImplementedError("`save` must be implemented by a subclass.")
 
 
 class _TypeRegistry(object):
