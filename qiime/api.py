@@ -13,19 +13,22 @@ def get_urls():
 
 @route('/system', GET)
 def system_info(request):
-    return {'version': qiime.__version__}
+    return {
+        'version': qiime.__version__
+    }
 
 @route('/system/plugins', GET)
 @route('/system/plugins/all', GET)
 def list_plugins(request):
-    return {'plugins': list(plugin_registry.get_plugin_uris())}
+    return {
+        'plugins': list(plugin_registry.get_plugin_uris())
+    }
 
 @route('/system/plugins/:plugin', GET)
 def plugin_info(request, plugin_name):
     plugin = plugin_registry.get_plugin(plugin_name)
 
     return {
-        'uri': plugin.uri,
         'name': plugin.name,
         'version': plugin.version,
         'author': plugin.author,
@@ -45,7 +48,6 @@ def method_info(request, plugin_name, method_name):
     method = plugin_registry.get_plugin(plugin_name).get_method(method_name)
 
     return {
-        'uri': method.uri,
         'name': method.name,
         'help': method.docstring,
         'inputs': {name: cls.annotation() for name, cls in method.inputs.items()},
@@ -80,7 +82,6 @@ def type_info(request, *_):
     type_ = type_registry.get_type(request.path)
 
     return {
-        'uri': type_.uri,
         'name': type_.name,
         'description': type_.__doc__
     }
@@ -88,20 +89,20 @@ def type_info(request, *_):
 @route('/system/types/primitives', GET)
 def list_primitive_types(request):
     return {
-        'types': [t.uri for t in type_registry.get_primitive_types().values()]
+        'primitives': [t.uri for t in type_registry.get_primitive_types().values()]
     }
 
 @route('/system/types/parameterized', GET)
 def list_parameterized_types(request):
     return {
-        'types': [t.uri for t in
+        'parameterized': [t.uri for t in
                   type_registry.get_parameterized_types().values()]
     }
 
 @route('/studies', GET)
 def list_studies(request):
     return {
-        'uris': [study.uri for study in Study.select()]
+        'studies': [study.uri for study in Study.select()]
     }
 
 @route('/studies', POST, params=['name', 'description'])
@@ -109,7 +110,7 @@ def create_study(request, name, description):
     study = Study(name=name, description=description)
     study.save()
     return {
-        'uri': study.uri
+        'study': study.uri
     }
 
 @route('/studies/:study', GET)
@@ -117,7 +118,6 @@ def study_info(request, study_id):
     study = Study.get(Study.id == study_id)
 
     return {
-        'uri': study.uri,
         'name': study.name,
         'description': study.description,
         'created': str(study.created)
@@ -132,14 +132,14 @@ def study_info(request, study_id, name=None, description=None):
         study.description = description
     study.save()
 
-    return {} # TODO normalize responses with status
+    return {}
 
 @route('/studies/:study', DELETE)
 def study_info(request, study_id):
     study = Study.get(Study.id == study_id)
     study.delete_instance() # TODO think about cascading deletes
 
-    return {} # TODO normalize responses with status
+    return {}
 
 @route('/studies/:study/artifacts', POST, params=['name', 'artifact_type'])
 def create_artifact(request, study_id, name, artifact_type):
@@ -156,16 +156,14 @@ def create_artifact(request, study_id, name, artifact_type):
     artifact_proxy = ArtifactProxy(name=name, artifact=artifact, study=study)
     artifact_proxy.save()
 
-    return {
-        'uri': artifact_proxy.uri
-    }
+    return {}
 
 @route('/studies/:study/artifacts', GET)
 def list_artifacts(request, study_id):
     artifacts = Study.get(id=study_id).artifacts
 
     return {
-        'uris': [a.uri for a in artifacts]
+        'artifacts': [a.uri for a in artifacts]
     }
 
 @route('/studies/:study/artifacts', PUT, params=['artifact'])
@@ -185,7 +183,7 @@ def link_artifact(request, study_id, artifact):
         linked_artifact = linked_artifacts.get()
 
     return {
-        'uri': linked_artifact.uri
+        'artifact': linked_artifact.uri
     }
 
 @route('/studies/:study/artifacts/:artifact', GET, params=['export'])
@@ -198,7 +196,6 @@ def artifact_info(request, study_id, artifact_id, export=None):
         ArtifactProxy.study == study_id).get()
 
     return {
-        'uri': proxy.uri,
         'name': proxy.name,
         'type': proxy.artifact.type.uri
     }
@@ -234,7 +231,7 @@ def list_jobs(request, study_id, status=None):
         jobs = jobs.where(Job.status == status)
 
     return {
-        'uris': [j.uri for j in jobs]
+        'jobs': [j.uri for j in jobs]
     }
 
 @route('/studies/:study/jobs', POST, params=['workflow', 'method'])
@@ -273,7 +270,7 @@ def create_job(request, study_id, workflow=None, method=None):
         Executor(job)()
 
         return {
-            'uri': job.uri
+            'job': job.uri
         }
 
 @route('/studies/:study/jobs/:job', GET, params=['subscribe'])
@@ -289,7 +286,6 @@ def job_info(request, study_id, job_id, subscribe=None): # TODO handle SSE
         outputs = [_construct_list(o.result) for o in job.outputs]
 
     return {
-        'uri': job.uri,
         'status': job.status,
         'submitted': str(job.submitted),
         'completed': completed,
@@ -298,15 +294,6 @@ def job_info(request, study_id, job_id, subscribe=None): # TODO handle SSE
         'inputs': {i.key: i.value.decode('utf-8') for i in job.inputs},
         'outputs': outputs
     }
-
-def _construct_list(ordered_result):
-    if ordered_result.artifact is not None:
-        return ordered_result.artifact.uri
-
-    if ordered_result.primitive is not None:
-        return ordered_result.primitive
-
-    return [_construct_list(r) for r in ordered_result.children]
 
 # TODO handle updating downstream parts of the workflow
 @route('/studies/:study/jobs/:job', PUT, params=['status'])
@@ -334,7 +321,7 @@ def list_workflows(request, study_id):
     workflows = Study.get(id=study_id).workflows
 
     return {
-        'uris': [w.uri for w in workflows]
+        'workflows': [w.uri for w in workflows]
     }
 
 @route('/studies/:study/workflows', POST,
@@ -345,7 +332,7 @@ def create_workflow(request, study_id, name, description, template):
     workflow.save()
 
     return {
-        'uri': workflow.uri
+        'workflow': workflow.uri
     }
 
 @route('/studies/:study/workflows/:workflow', GET)
@@ -353,7 +340,6 @@ def workflow_info(request, study_id, workflow_id):
     workflow = Workflow.get(id=workflow_id)
 
     return {
-        'uri': workflow.uri,
         'name': workflow.name,
         'description': workflow.description,
         'template': workflow.template
@@ -374,7 +360,9 @@ def update_workflow(request, study_id, workflow_id, name=None,
 
     workflow.save()
 
-    return {}
+    return {
+        'workflow': workflow.uri
+    }
 
 @route('/studies/:study/workflows/:workflow', DELETE)
 def delete_workflow(request, study_id, workflow_id):
@@ -429,3 +417,12 @@ def _get_file_data(request):
 def _generate_workflow_template_from_method(method_uri):
     # TODO finish me! :please:
     return method_uri, method_uri, method_uri
+
+def _construct_list(ordered_result):
+    if ordered_result.artifact is not None:
+        return ordered_result.artifact.uri
+
+    if ordered_result.primitive is not None:
+        return ordered_result.primitive
+
+    return [_construct_list(r) for r in ordered_result.children]

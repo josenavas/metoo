@@ -42,7 +42,12 @@ def route(path, method, params=(), authenticate=True):
             # TODO: get smarter about passing only the needed data instead
             # of a full request object.
             args.insert(0, request_handler.request)
-            request_handler.write(function(*args, **kwargs))
+            response = function(*args, **kwargs)
+            response.update({
+                'resource': request_handler.request.path,
+                'action': method
+            })
+            request_handler.write(response)
 
         if path not in _urls:
             _urls[path] = {}
