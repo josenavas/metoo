@@ -81,6 +81,15 @@ def ChooseOne(type_, options):
         args = options
 
         @classmethod
+        def annotation(cls):
+            return {
+                'uri': cls.uri,
+                'content': 'parameterized',
+                'subtype': cls.subtype.annotation(),
+                'args': list(cls.args)
+            }
+
+        @classmethod
         def dereference(cls, reference):
             reference = cls.normalize(reference)
             return cls.subtype.dereference(reference)
@@ -119,6 +128,15 @@ def ChooseMany(type_, options):
     class ChooseMany(Parameterized):
         subtype = type_
         args = options
+
+        @classmethod
+        def annotation(cls):
+            return {
+                'uri': cls.uri,
+                'content': 'parameterized',
+                'subtype': cls.subtype.annotation(),
+                'args': list(cls.args)
+            }
 
         @classmethod
         def dereference(cls, reference):

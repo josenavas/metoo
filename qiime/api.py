@@ -5,7 +5,7 @@ from qiime.core.executor import Executor
 from qiime.core.registry import plugin_registry
 from qiime.core.tornadotools import route, GET, POST, PUT, DELETE, yield_urls
 from qiime.core.util import extract_artifact_id
-from qiime.db import Artifact, ArtifactProxy, Type, Study, Workflow, WorkflowInput, Job, JobInput
+from qiime.db import Artifact, ArtifactProxy, Type, Study, Workflow, WorkflowInput, Job, JobInput, OrderedResult
 from qiime.types import type_registry
 
 def get_urls():
@@ -283,8 +283,10 @@ def job_info(request, study_id, job_id, subscribe=None): # TODO handle SSE
 
     job = Job.get(id=job_id)
     completed = job.completed
+    outputs = None
     if completed is not None:
         completed = str(completed)
+        outputs = [_construct_list(o.result) for o in job.outputs]
 
     return {
         'uri': job.uri,
@@ -292,8 +294,19 @@ def job_info(request, study_id, job_id, subscribe=None): # TODO handle SSE
         'submitted': str(job.submitted),
         'completed': completed,
         'workflow': job.workflow.uri,
-        'inputs': {i.key: i.value.decode('utf-8') for i in job.inputs}
+        # TODO track defaults as well. How do we do this for workflows?
+        'inputs': {i.key: i.value.decode('utf-8') for i in job.inputs},
+        'outputs': outputs
     }
+
+def _construct_list(ordered_result):
+    if ordered_result.artifact is not None:
+        return ordered_result.artifact.uri
+
+    if ordered_result.primitive is not None:
+        return ordered_result.primitive
+
+    return [_construct_list(r) for r in ordered_result.children]
 
 # TODO handle updating downstream parts of the workflow
 @route('/studies/:study/jobs/:job', PUT, params=['status'])

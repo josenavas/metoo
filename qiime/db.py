@@ -84,22 +84,26 @@ class JobInput(BaseModel):
     job = pw.ForeignKeyField(Job, related_name='inputs')
 
 class OrderedResult(BaseModel):
+    class Meta:
+        indexes = [(('parent', 'order'), True)]
+        order_by = ('parent', 'order')
+
     order = pw.IntegerField()
-    ordered_result = pw.ForeignKeyField('self', null=True, constraints=[
+    parent = pw.ForeignKeyField('self', null=True, related_name='children')
+    artifact = pw.ForeignKeyField(ArtifactProxy, null=True, constraints=[
         pw.Check(
-            '(ordered_result_id IS NULL AND artifact_id IS NULL AND primitive IS NOT NULL) OR '
-            '(ordered_result_id IS NULL AND artifact_id IS NOT NULL AND primitive IS NULL) OR '
-            '(ordered_result_id IS NOT NULL AND artifact_id IS NULL AND primitive IS NULL)'
-        )
-    ])
-    artifact = pw.ForeignKeyField(ArtifactProxy, null=True)
+            '(artifact_id IS NULL AND primitive IS NULL) OR '
+            '(artifact_id IS NULL AND primitive IS NOT NULL) OR '
+            '(artifact_id IS NOT NULL AND primitive IS NULL)'
+        )])
     primitive = pw.BlobField(null=True)
 
 class JobOutput(BaseModel):
     class Meta:
         indexes = [(('job', 'order'), True)]
+        order_by = ('job', 'order')
 
-    job = pw.ForeignKeyField(Job)
+    job = pw.ForeignKeyField(Job, related_name='outputs')
     order = pw.IntegerField()
     result = pw.ForeignKeyField(OrderedResult)
 

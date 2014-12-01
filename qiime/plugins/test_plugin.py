@@ -61,13 +61,13 @@ class RarefiedOTUTable(OTUTable, RarefiedTable):
 def add_dms(a: DistanceMatrix,
             c: ChooseMany(Integer, [10, 42, 100]),
             b: DistanceMatrix='/studies/1/artifacts/2'
-            ) -> (DistanceMatrix, ChooseMany(Integer, [1, 2, 3, 42]), Decimal):
+            ) -> (DistanceMatrix, ChooseMany(Integer, [1, 2, 3, 42]), List(List(Decimal))):
     """Add two distance matrices of the same shape."""
     if a.shape != b.shape:
         raise ValueError("Distance matrices must be the same shape in order to add them.")
     print(c)
     print(type(c))
-    return skbio.DistanceMatrix(a.data + b.data), [1, 2, 3], 4.1
+    return skbio.DistanceMatrix(a.data + b.data), [1, 2, 3], [[4.1], [2.2]]
 
 
 # @qiime.register_workflow("some workflow")

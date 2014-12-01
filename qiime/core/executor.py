@@ -1,5 +1,10 @@
 from qiime.core.registry import plugin_registry
-from qiime.core.util import is_list
+from qiime.core.util import is_list, extract_artifact_id
+from qiime.types import Artifact, Parameterized, Primitive
+from qiime.types.parameterized import List, ChooseMany
+import qiime.db as db
+
+import datetime
 
 class Executor(object):
     def __init__(self, job):
@@ -13,7 +18,37 @@ class Executor(object):
         inputs = listify_duplicate_keys(self.job.inputs)
 
         results = method(study, **inputs)
-        print(results)
+        for i, (result, output) in enumerate(zip(results, method.outputs)):
+            ordered_result = traverse_result_and_record(result, output)
+            db.JobOutput(job=self.job, order=i, result=ordered_result).save()
+
+        self.job.status = 'completed'
+        self.job.completed = datetime.datetime.now()
+        self.job.save()
+
+def traverse_result_and_record(result, type_, order=0, parent=None):
+    if issubclass(type_, Artifact):
+        ordered_result = db.OrderedResult(order=order,
+                                          parent=parent,
+                                          artifact=db.ArtifactProxy.get(db.ArtifactProxy.id == extract_artifact_id(result)))
+        ordered_result.save()
+        return ordered_result
+
+    if issubclass(type_, Primitive):
+        ordered_result = db.OrderedResult(order=order,
+                                          parent=parent,
+                                          primitive=result)
+        ordered_result.save()
+        return ordered_result
+
+    if type_.name == 'List' or type_.name == 'ChooseMany':
+        parent = db.OrderedResult(order=order, parent=parent)
+        parent.save()
+        for i, r in enumerate(result):
+            traverse_result_and_record(r, type_.subtype, order=i, parent=parent)
+        return parent
+
+    return traverse_result_and_record(result, type_.subtype, order=order, parent=parent)
 
 
 def listify_duplicate_keys(job_inputs):
