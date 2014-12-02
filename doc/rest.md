@@ -1,19 +1,40 @@
 # QIIME 2 REST API
+- Each resource is either an entity or a collection.
+- Every entity has one, and only one, URI (Uniform Resource Identifier), which is its own URL. This URI will always end in an ID.
+- The host is a meaningful part of a resource's URI, allowing distributed URIs.
+- Every collection contains zero or more entities. The content of a collection is not necessarily exclusive to a URL. The order of a collection is not significant.
+- Every response is JSON, minimally containing the URI of the resource (`resource`) and the HTTP method (`action`).
+- HTTP response codes are used to indicate status.
 
-## /system
-
-### GET
-QIIME server version
-
-## /system/plugins
-
-### GET
-List of plugins.
-
-## /system/plugins/:plugin
+# /system
 
 ### GET
-Info about the plugin, e.g., author, description, if its an official plugin, etc.
+URI of the host and general health endpoint.
+
+Response:
+
+    version: QIIME server version [string]
+
+# /system/plugins and /system/plugins/all
+
+### GET
+Collection of plugins.
+
+Response:
+
+    plugins: plugin URIs [array]
+
+# /system/plugins/:plugin
+
+### GET
+Info about the plugin.
+
+Response:
+
+    name: [string]
+    version: [string]
+    author: [string]
+    description: [string]
 
 ## /system/plugins/all/methods
 
