@@ -10,10 +10,6 @@ def qcli():
 def start():
     import qiime.service
     qiime.service.init()
-    from qiime.core.registry import plugin_registry
-    p = plugin_registry._plugins
-    print(p)
-    print(p['org.qiime.plugins.qiime'].get_methods())
 
 if __name__ == '__main__':
     qcli()

@@ -151,7 +151,6 @@ def ChooseMany(type_, options):
 
         @classmethod
         def normalize(cls, reference):
-            print(reference)
             if not is_list(reference):
                 reference = (reference,)
             results = []

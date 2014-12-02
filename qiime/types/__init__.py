@@ -245,7 +245,6 @@ class _TypeRegistry(object):
         if uri in self._parameterized:
             return self._parameterized[uri]
         else:
-            print(self._parameterized)
             raise ValueError("Unrecognized URI %r." % uri)
 
     def get_types(self):
