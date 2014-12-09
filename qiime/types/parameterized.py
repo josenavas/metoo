@@ -8,7 +8,7 @@ import qiime.types.primitives as p
 @type_registry.parameterized
 def Range(type_, min_, max_, include_min=True, include_max=True):
     _assert_valid_type(type_, [p.Integer, p.Decimal])
-    _assert_valid_args(type_, [min_, max_])
+    _assert_valid_args(type_, [min_, max_], allow_none=True)
 
     class Range(Parameterized):
         subtype = type_
@@ -41,7 +41,8 @@ def Range(type_, min_, max_, include_min=True, include_max=True):
             right_op = operator.le if include_max else operator.lt
 
             # equivalent to (for example): not (min_ < value < max_)
-            if not (left_op(min_, value) and right_op(value, max_)):
+            if not ((min_ is None or left_op(min_, value)) and
+                    (max_ is None or right_op(value, max_))):
                 range_str = '%s%s, %s%s' % (
                     '[' if include_min else '(', min_, max_,
                     ']' if include_max else ')')
@@ -187,9 +188,12 @@ def ChooseMany(type_, options):
 
     return ChooseMany
 
-def _assert_valid_args(type_, args):
+def _assert_valid_args(type_, args, allow_none=False):
     for arg in args:
-        type_.normalize(arg)
+        if allow_none and arg is None:
+            continue
+        else:
+            type_.normalize(arg)
 
 def _assert_valid_type(type_, valid_types):
     if not any(map(lambda x: issubclass(type_, x), valid_types)):

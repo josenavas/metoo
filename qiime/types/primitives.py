@@ -15,7 +15,11 @@ def primitive_factory(class_name, primitive):
 
 Integer = primitive_factory('Integer', int)
 Decimal = primitive_factory('Decimal', float)
-Boolean = primitive_factory('Boolean', bool)
+Boolean = primitive_factory(
+    'Boolean',
+    lambda e: True if e == b'true' else False # TODO handle this better
+)
 String = primitive_factory(
     'String',
-    lambda e: e.decode('utf-8') if isinstance(e, bytes) else str(e))
+    lambda e: e.decode('utf-8') if isinstance(e, bytes) else str(e)
+)

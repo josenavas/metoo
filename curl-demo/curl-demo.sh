@@ -25,3 +25,19 @@ curl -w "\n" -X POST -F method=/system/plugins/qiime/methods/pcoa -F input_dm=/s
 # any new artifacts and simply returns a correlation coefficient between -1 and
 # +1 (non-artifact output).
 curl -w "\n" -X POST -F method=/system/plugins/qiime/methods/envcorr -F input_sample_metadata=/studies/1/artifacts/2 -F input_column1=PH -F input_column2=SOIL_MOISTURE_DEFICIT http://localhost:8888/studies/1/jobs
+
+# In the previous example we used the default correlation method (Pearson).
+# Let's specify Spearman correlation instead.
+curl -w "\n" -X POST -F method=/system/plugins/qiime/methods/envcorr -F input_sample_metadata=/studies/1/artifacts/2 -F input_column1=PH -F input_column2=SOIL_MOISTURE_DEFICIT -F input_method=spearman http://localhost:8888/studies/1/jobs
+
+# Submit a job to compute a distance matrix from three environmental variables
+# (pH, soil moisture deficit, and latitude).
+curl -w "\n" -X POST -F method=/system/plugins/qiime/methods/dm_from_env -F input_sample_metadata=/studies/1/artifacts/2 -F input_column=PH http://localhost:8888/studies/1/jobs
+curl -w "\n" -X POST -F method=/system/plugins/qiime/methods/dm_from_env -F input_sample_metadata=/studies/1/artifacts/2 -F input_column=SOIL_MOISTURE_DEFICIT http://localhost:8888/studies/1/jobs
+curl -w "\n" -X POST -F method=/system/plugins/qiime/methods/dm_from_env -F input_sample_metadata=/studies/1/artifacts/2 -F input_column=LATITUDE http://localhost:8888/studies/1/jobs
+
+# Run Mantel tests to compare our UniFrac distance matrix against the three
+# environmental distance matrices we computed above.
+curl -w "\n" -X POST -F method=/system/plugins/qiime/methods/mantel -F input_x=/studies/1/artifacts/1 -F input_y=/studies/1/artifacts/4 -F input_method=spearman -F input_strict=false http://localhost:8888/studies/1/jobs
+curl -w "\n" -X POST -F method=/system/plugins/qiime/methods/mantel -F input_x=/studies/1/artifacts/1 -F input_y=/studies/1/artifacts/5 -F input_method=spearman -F input_strict=false http://localhost:8888/studies/1/jobs
+curl -w "\n" -X POST -F method=/system/plugins/qiime/methods/mantel -F input_x=/studies/1/artifacts/1 -F input_y=/studies/1/artifacts/6 -F input_method=spearman -F input_strict=false http://localhost:8888/studies/1/jobs
