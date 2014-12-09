@@ -1,16 +1,18 @@
+import operator
+
 from qiime.types import type_registry, Parameterized
 from qiime.core.util import is_list
 
 import qiime.types.primitives as p
 
 @type_registry.parameterized
-def Range(type_, min_, max_):
+def Range(type_, min_, max_, include_min=True, include_max=True):
     _assert_valid_type(type_, [p.Integer, p.Decimal])
     _assert_valid_args(type_, [min_, max_])
 
     class Range(Parameterized):
         subtype = type_
-        args = (min_, max_)
+        args = (min_, max_, include_min, include_max)
 
         @classmethod
         def dereference(cls, reference):
@@ -25,15 +27,25 @@ def Range(type_, min_, max_):
         @classmethod
         def normalize(cls, reference):
             reference = cls.subtype.normalize(reference)
-            if not (min_ <= reference < max_):
-                raise TypeError('Not in range.')
+            cls._assert_valid_range(reference)
             return reference
 
         @classmethod
         def check_type(cls, argument):
             cls.subtype.check_type(argument)
-            if not (min_ <= argument < max_):
-                raise TypeError('Not in range.')
+            cls._assert_valid_range(argument)
+
+        @classmethod
+        def _assert_valid_range(cls, value):
+            left_op = operator.le if include_min else operator.lt
+            right_op = operator.le if include_max else operator.lt
+
+            # equivalent to (for example): not (min_ < value < max_)
+            if not (left_op(min_, value) and right_op(value, max_)):
+                range_str = '%s%s, %s%s' % (
+                    '[' if include_min else '(', min_, max_,
+                    ']' if include_max else ')')
+                raise TypeError('%r not in range %s.' % (value, range_str))
 
     return Range
 

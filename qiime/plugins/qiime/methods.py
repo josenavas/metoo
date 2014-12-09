@@ -1,18 +1,25 @@
 import skbio
+from scipy.stats import pearsonr, spearmanr
 
-from qiime.types.parameterized import ChooseMany, List
-from qiime.types.primitives import Integer, Decimal
+from qiime.types.parameterized import ChooseOne, Range
+from qiime.types.primitives import Decimal, String
 from . import qiime
-from .types import DistanceMatrix
+from .types import DistanceMatrix, OrdinationResults, SampleMetadata
 
-@qiime.register_method("Add distance matrices")
-def add_dms(a: DistanceMatrix,
-            c: ChooseMany(Integer, [10, 42, 100]),
-            b: DistanceMatrix='/studies/1/artifacts/2'
-            ) -> (DistanceMatrix, ChooseMany(Integer, [1, 2, 3, 42]), List(List(Decimal))):
-    """Add two distance matrices of the same shape."""
-    if a.shape != b.shape:
-        raise ValueError("Distance matrices must be the same shape in order to add them.")
-    print(c)
-    print(type(c))
-    return skbio.DistanceMatrix(a.data + b.data), [1, 2, 3], [[4.1], [2.2]]
+@qiime.register_method("Principal Coordinates Analysis (PCoA)")
+def pcoa(dm: DistanceMatrix) -> OrdinationResults:
+    """Perform Principal Coordinates Analysis (PCoA) on a distance matrix."""
+    return skbio.stats.ordination.PCoA(dm).scores()
+
+@qiime.register_method("Environmental variable correlation")
+def envcorr(sample_metadata: SampleMetadata, column1: String, column2: String,
+            method: ChooseOne(String, ['pearson', 'spearman']) = 'pearson') -> Range(Decimal, -1, 1):
+    """Compute correlation between two numeric environmental variables."""
+    if method == 'pearson':
+        corr_function = pearsonr
+    elif method == 'spearman':
+        corr_function = spearmanr
+    else:
+        # shouldn't be possible to get here
+        pass
+    return corr_function(sample_metadata[column1], sample_metadata[column2])[0]

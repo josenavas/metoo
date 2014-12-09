@@ -217,8 +217,8 @@ class _TypeRegistry(object):
         uri = '/system/types/parameterized/%s' % function.__name__
         name = function.__name__
 
-        def wrapped_factory(*args):
-            param_type = function(*args)
+        def wrapped_factory(*args, **kwargs):
+            param_type = function(*args, **kwargs)
             param_type.uri = uri
             param_type.name = name
             return param_type

@@ -1,5 +1,6 @@
 from io import StringIO
 
+import pandas as pd
 import skbio
 
 from qiime.types import Artifact
@@ -23,33 +24,43 @@ class DistanceMatrix(Artifact):
 
 @qiime.register_type
 class UniFracDistanceMatrix(DistanceMatrix):
-    """..."""
+    """Distance matrix containing UniFrac distances."""
     name = "UniFrac distance matrix"
 
 @qiime.register_type
 class BrayCurtisDistanceMatrix(DistanceMatrix):
-    """---"""
+    """Distance matrix containing Bray-Curtis distances."""
     name = "bray-curtis distance matrix"
 
 @qiime.register_type
-class ContingencyTable(Artifact):
-    """2-D table of observation counts within each sample."""
-    name = "contingency table"
+class SampleMetadata(Artifact):
+    """Metadata on a per-sample basis."""
+    name = 'sample metadata'
+    data_type = pd.DataFrame
+
+    @classmethod
+    def load(cls, blob):
+        return pd.read_csv(StringIO(blob.decode('utf-8')), sep='\t',
+                           index_col=0)
+
+    @classmethod
+    def save(cls, data):
+        blob = StringIO()
+        data.to_csv(blob, sep='\t')
+        return blob.getvalue()
 
 @qiime.register_type
-class OTUTable(ContingencyTable):
-    """OTU table"""
-    name = "OTU table"
+class OrdinationResults(Artifact):
+    """Results from applying an ordination technique to a distance matrix."""
+    name = 'ordination results'
+    data_type = skbio.stats.ordination.OrdinationResults
 
-# TODO this hierarchy probably isn't the best way to handle this, but useful
-# for testing multiple inheritance
+    @classmethod
+    def load(cls, blob):
+        return cls.data_type.read(StringIO(blob.decode('utf-8')))
 
-@qiime.register_type
-class RarefiedTable(Artifact):
-    """Rarefied table"""
-    name = "rarefied table"
-
-@qiime.register_type
-class RarefiedOTUTable(OTUTable, RarefiedTable):
-    """Rarefied OTU table"""
-    name = "rarefied OTU table"
+    @classmethod
+    def save(cls, data):
+        blob = StringIO()
+        data.write(blob)
+        return blob.getvalue()
