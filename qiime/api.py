@@ -37,7 +37,7 @@ def plugin_info(request, plugin_name):
 
 @route('/system/plugins/all/methods', GET)
 def list_all_methods(request):
-    return list_methods(None)
+    return list_methods(request, None)
 
 @route('/system/plugins/:plugin/methods', GET)
 def list_methods(request, plugin_name):
@@ -56,7 +56,7 @@ def method_info(request, plugin_name, method_name):
 
 @route('/system/plugins/all/types', GET, params=['format'])
 def list_all_plugin_types(request, format=None):
-    return list_plugin_types(None, format=format)
+    return list_plugin_types(request, None, format=format)
 
 @route('/system/plugins/:plugin/types', GET, params=['format'])
 def list_plugin_types(request, plugin_name, format=None):
