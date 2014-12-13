@@ -44,3 +44,6 @@ curl -w "\n" -X POST -F method=/system/plugins/qiime/methods/mantel -F input_x=/
 
 # Run Mantel tests for all pairs of distance matrices.
 curl -w "\n" -X POST -F method=/system/plugins/qiime/methods/pwmantel -F input_dms=/studies/1/artifacts/1 -F input_dms=/studies/1/artifacts/4 -F input_dms=/studies/1/artifacts/5 -F input_dms=/studies/1/artifacts/6 -F input_labels=UniFrac -F input_labels=pH -F input_labels="Soil moisture deficit" -F input_labels=Latitude -F input_method=spearman -F input_strict=false http://localhost:8888/studies/1/jobs
+
+# Run bioenv on distance matrix and environmental variables.
+curl -w "\n" -X POST -F method=/system/plugins/qiime/methods/bioenv -F input_distance_matrix=/studies/1/artifacts/1 -F input_sample_metadata=/studies/1/artifacts/2 -F input_columns='TOT_ORG_CARB' -F input_columns='SILT_CLAY' -F input_columns='ELEVATION' -F input_columns='SOIL_MOISTURE_DEFICIT' -F input_columns='CARB_NITRO_RATIO' -F input_columns='ANNUAL_SEASON_TEMP' -F input_columns='ANNUAL_SEASON_PRECPT' -F input_columns='PH' -F input_columns='CMIN_RATE' -F input_columns='LONGITUDE' -F input_columns='LATITUDE' http://localhost:8888/studies/1/jobs

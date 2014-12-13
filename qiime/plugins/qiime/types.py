@@ -82,3 +82,20 @@ class PairwiseMantelResults(Artifact):
         blob = StringIO()
         data.to_csv(blob, sep='\t')
         return blob.getvalue()
+
+@qiime.register_type
+class BioenvResults(Artifact):
+    """Results from performing bioenv test."""
+    name = 'BIO-ENV results'
+    data_type = pd.DataFrame
+
+    @classmethod
+    def load(cls, blob):
+        return pd.read_csv(StringIO(blob.decode('utf-8')), sep='\t',
+                           index_col=0)
+
+    @classmethod
+    def save(cls, data):
+        blob = StringIO()
+        data.to_csv(blob, sep='\t')
+        return blob.getvalue()

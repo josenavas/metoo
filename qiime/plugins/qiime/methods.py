@@ -7,7 +7,8 @@ from qiime.types.parameterized import ChooseOne, List, Range
 from qiime.types.primitives import Boolean, Decimal, Integer, String
 from . import qiime
 from .types import (
-    DistanceMatrix, OrdinationResults, SampleMetadata, PairwiseMantelResults)
+    DistanceMatrix, OrdinationResults, SampleMetadata, PairwiseMantelResults,
+    BioenvResults)
 
 @qiime.register_method("Principal Coordinates Analysis (PCoA)")
 def pcoa(dm: DistanceMatrix) -> OrdinationResults:
@@ -54,10 +55,18 @@ def pwmantel(dms: List(DistanceMatrix), labels: List(String) = (),
              permutations: Range(Integer, 0, None) = 999,
              alternative: ChooseOne(String, ['two-sided', 'greater', 'less']) = 'two-sided',
              strict: Boolean = True) -> PairwiseMantelResults:
-    if labels == ():
-        # scikit-bio expects None for default case
-        labels = None
+    # scikit-bio expects None for default case
+    labels = None if labels == () else labels
 
     return skbio.stats.distance.pwmantel(
         dms, labels=labels, method=method, permutations=permutations,
         alternative=alternative, strict=strict)
+
+@qiime.register_method("BIO-ENV")
+def bioenv(distance_matrix: DistanceMatrix, sample_metadata: SampleMetadata,
+        columns: List(String) = ()) -> BioenvResults:
+    # scikit-bio expects None for default case
+    columns = None if columns == () else columns
+
+    return skbio.stats.distance.bioenv(distance_matrix, sample_metadata,
+                                       columns=columns)
