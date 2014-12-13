@@ -1,47 +1,412 @@
-<!DOCTYPE HTML>
+<!DOCTYPE html>
 <html>
-    <head>
-        <title>Awesome example test for web pages totally cool with demo</title>
-        <script src='http://cdnjs.cloudflare.com/ajax/libs/q.js/1.1.1/q.min.js'></script>
-        <script src='script.js'></script>
-        <script>
-            q = qiime.connect('http://localhost:8888');
-        </script>
-    </head>
-    <body>
+  <head>
+      
+	<link type="text/css" rel="stylesheet" href="http://layout.jquery-dev.com/lib/css/layout-default-latest.css" />
 
-        <script>
-            function make_result(name, value) {
-                var body = document.body;
-                var wrapper = document.createElement("div");
-                body.appendChild(wrapper);
-                var title = document.createElement("h3");
-                var result = document.createElement("pre");
-                title.innerHTML = name;
-                result.innerHTML = value;
-                wrapper.appendChild(title);
-                wrapper.appendChild(result);
+    <script type="text/javascript" src="http://layout.jquery-dev.com/lib/js/jquery-latest.js"></script>
+	<script type="text/javascript" src="http://layout.jquery-dev.com/lib/js/jquery-ui-latest.js"></script>
+	<script type="text/javascript" src="http://layout.jquery-dev.com/lib/js/jquery.layout-1.3.0.rc30.80.js"></script>
+
+    <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/8.4/styles/default.min.css">
+    <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/8.4/highlight.min.js"></script>
+    <script src='http://cdnjs.cloudflare.com/ajax/libs/q.js/1.1.1/q.min.js'></script>
+      <script src='qiime.js'></script>
+    <!-- The core React library -->
+    <script src="http://fb.me/react-0.12.0.js"></script>
+    <!-- In-browser JSX transformer, remove when pre-compiling JSX. -->
+    <script src="http://fb.me/JSXTransformer-0.12.0.js"></script>
+    <style>
+        html, body {
+            padding: 0px;
+            margin: 0px;
+            position: absolute;
+            top: 0px;
+            bottom: 0px;
+            left: 0px;
+            right: 0px;
+            width:100%;
+        }
+        #wrapper {
+            position: relative;
+            height: 100%;
+        }
+        
+        .ui-layout-pane {
+            padding: 0px !important;   
+        }
+        
+        .studyWrapper {
+            border: 5px solid #1abc9c; 
+            background: white;
+            position: relative;
+            z-index: 10;
+        }
+        
+        #contentWrapper {
+            position:relative;
+            top: 0px;
+            bottom: 0px;
+        }
+        
+        .rightWrapper {
+            margin-left: 300px;
+            position: relative;
+        }
+        
+        .rightWrapper:after {
+            content: '';
+            display: block;
+            clear: both;   
+        }
+        
+        .toolbar {
+            width: 295px;  
+            height: 800px;
+            float: left;
+        }
+        
+        .tab {
+            display: inline-block;
+            background: #16a085;
+            margin: 0px 10px 0px 0px;
+            width: 200px;
+            height: 50px;
+            line-height: 50px;
+            text-align: center;
+            cursor: pointer;
+            border-top-right-radius: 15px;
+            border-top-left-radius: 15px;
+            position: relative;
+            bottom: -10px;
+            z-index: 0;
+        }
+        
+        .toolbarTab {
+            display: inline-block;
+            padding: 0px 5px;
+            cursor: pointer;
+            font-size: 20px;
+            margin: 0px 5px;
+        }
+        
+        .toolbarNav {
+            margin: 0px;
+            padding: 0px;
+        }
+        
+        .active {
+            background: #1abc9c;
+            height: 60px;
+            bottom: 0px;
+        }
+        
+        #tabbar {
+            border-bottom: 5px solid #1abc9c;
+        }
+        
+        .content {
+            padding-bottom: 400px;  
+        }
+        
+        .log {
+            list-style: none;
+        }
+        
+        .entry {
+            list-style: none;
+            background: #f0f0f0;
+            margin: 0px;
+            padding: 0px;
+            position: relative;
+            width: 100%;
+            border-bottom: 1px solid black;
+        }
+        
+        .entryTitle {
+        }
+        
+        .even {
+        }
+        
+        .logData {
+            float: left;
+            width: 50%;
+        }
+        
+        .logData:after {
+            content: "";
+            clear: both;   
+        }
+        
+        .logDataWrapper {
+            display: inline-block;
+            width: 100%;
+        }
+        
+    </style>
+  </head>
+  <body>
+    <script type="text/jsx">
+        var eta_factory = function() {
+            var arguments = Array.prototype.slice.call(arguments);
+            var func = arguments[0];
+            var args = arguments.splice(1);
+            return function() {
+                func.apply(self, args)
             }
-
-            api = [
-                ['list_methods', undefined],
-                ['list_methods', 'org.qiime.plugins.qiime'],
-                ['list_methods', 'org.qiime.plugins.mothur'],
-                ['list_plugins', undefined],
-                ['list_artifacts', undefined],
-                ['method_info', 'org.qiime.plugins.qiime.methods.some_method'],
-                ['method_info', 'org.qiime.plugins.qiime.methods.something_else'],
-            ]
-
-            for(var i=0; i<api.length; i++) {
-                (function(i){
-                    q[api[i][0]](api[i][1]).then(function(v){
-                        name = api[i][1] ? api[i][0] + ": " + api[i][1] : api[i][0]
-                        value = JSON.stringify(v, undefined, 4)
-                        make_result(name, value)
-                    })
-                })(i)
+        }
+        
+        var Tab = React.createClass({
+            render: function() {
+                var self = this;
+                return <div className={self.props.active ? 'tab active':'tab'} onClick={self.props.action}>{self.props.content}</div>;
             }
-        </script>
-    </body>
+        });
+        
+        var Header = React.createClass({
+            render: function() {
+                var self = this;
+                return <div><h1>{self.props.name}</h1><p>{self.props.description}</p></div>
+            }
+        });
+        
+        var Method = React.createClass({
+            render: function() {
+                return <div>{this.props.data.id}</div>
+            }
+        });
+        
+        var Methods = React.createClass({
+            render: function() {
+                var self = this;
+                return <ul>
+                    {self.props.methods.map(function(m) {
+                        return <li><a href="#" onClick={eta_factory(self.props.update, <Method data={m} />)}>{m.name}</a></li>
+                    })}
+                </ul>;
+            }
+        });
+        
+        var Artifact = React.createClass({
+            render: function() {
+                return <div>{this.props.data.id}</div>
+            }
+        });
+        
+        var Artifacts = React.createClass({
+            render: function() {
+                var self = this;
+                return <ul>
+                    {self.props.artifacts.map(function(a) {
+                        return <li><a href="#" onClick={eta_factory(self.props.update, <Artifact data={a} />)}>{a.name}</a></li>
+                    })}
+                </ul>
+            }
+        });
+        
+         var Job = React.createClass({
+            render: function() {
+                return <div>{this.props.data.id}</div>
+            }
+        });
+        
+        var Jobs = React.createClass({
+            render: function() {
+                var self = this;
+                return <ul>
+                    {self.props.jobs.map(function(j) {
+                        return <li><a href="#" onClick={eta_factory(self.props.update, <Job data={j} />)}>{j.submitted}</a></li>
+                    })}
+                </ul>
+            }
+        });
+        
+        var Toolbar = React.createClass({
+            getInitialState: function() {
+                return {tab: 0};
+            },
+            setTab: function(i) {
+                this.setState({tab: i});
+            },
+            getMethods: function() {
+                return this.props.parent.state.methods;
+            },
+            getArtifacts: function() {
+                console.log(this.props.parent);
+                return this.props.parent.getStudy().artifacts;
+            },
+            getJobs: function() {
+                return this.props.parent.getStudy().jobs;
+            },
+            render: function() {
+                var self = this;
+                var views = {
+                    0: <Methods update={self.props.update} methods={self.getMethods()}/>,
+                    1: <Artifacts update={self.props.update} artifacts={self.getArtifacts()}/>,
+                    2: <Jobs update={self.props.update} jobs={self.getJobs()}/>
+                };
+                return <div className='toolbar ui-layout-west'>
+                    <ul className='toolbarNav'>
+                        <li className='toolbarTab' onClick={eta_factory(self.setTab, 0)}>Methods</li>
+                        <li className='toolbarTab' onClick={eta_factory(self.setTab, 1)}>Artifacts</li>
+                        <li className='toolbarTab' onClick={eta_factory(self.setTab, 2)}>Jobs</li>
+                    </ul>
+                    {views[self.state.tab]}
+                </div>
+            }
+        });
+        
+        var Display = React.createClass({
+            render: function() {
+                var self = this;
+                return <div className='content ui-layout-center'>{self.props.content}</div>
+            }
+        });
+        
+        var Code = React.createClass({
+            componentDidMount: function() {
+                hljs.highlightBlock(this.getDOMNode().lastChild)
+            },
+            render: function() {
+                var self = this;
+                return <div className='logData'>
+                    <h5>{self.props.title}</h5>
+                    <pre><code className="json">{JSON.stringify(self.props.content, undefined, 2)}</code></pre>
+                </div>
+            }
+        });
+        
+        var Entry = React.createClass({
+            getInitialState: function() {
+                return {visible: false};
+            },
+            toggleVisibility: function() {
+                this.setState({visible: !this.state.visible})
+            },
+            render: function() {
+                var self = this;
+                return <li className='entry'>
+                    <div className={self.props.even ? "entryTitle even" : "entryTitle"}  onClick={self.toggleVisibility}>{self.props.data.message}</div>
+                    {self.state.visible ? <div className='logDataWrapper'>
+                        <Code title='Request' content={self.props.data.request} />
+                        <Code title='Response' content={self.props.data.response} />
+                    </div>: null}
+                </li>
+            }
+        });
+        
+        var Log = React.createClass({
+            render: function() {
+                var self = this;
+                return <ul className='log ui-layout-south' >
+                    {self.props.data.map(function(l, i){
+                        return <Entry key={i} data={l} even={i%2==0} />
+                    })}
+                </ul>
+            }
+        });
+        
+        var Study = React.createClass({
+            getInitialState: function() {
+                return {
+                    log: this.props.get('log'),
+                    tbview: this.props.get('tbview')
+                } //This is bad.
+            },
+            updateLog: function(index) {
+                this.props.get('log')[index] = !this.props.get('log')[index];
+                this.setState({log: this.props.get('log')}); //So is this.
+            },
+            changeToolbarView: function(id) {
+                this.props.set('tbview', id)
+                this.setState({tbview: id});
+            },
+            componentDidMount: function() {
+                $(this.getDOMNode()).layout({ applyDefaultStyles: true });
+            },
+            render: function() {
+                var self = this;
+                return <div className='ui-layout-center'>
+                    
+                </div>;
+            }
+        });
+        
+        var NewStudy = React.createClass({
+            render: function() {
+                return <div className='studyWrapper'><h1>Create a new study</h1></div>;
+            }
+        });
+            
+        var Body = React.createClass({
+            
+            getInitialState: function() {
+                console.log('uh oh');
+                var data = this.props.data;
+                data.active = null;
+                if(data.studies.length > 0)
+                    data.active = 0;
+                
+                data.state = data.studies.map(function() { return {content: <div>nothing</div>}; });
+                return data;
+            },
+            componentDidMount: function() {
+                var self = this;
+                self.props.data.listen(function(data) {
+                    data.active = self.state.active;
+                    data.state = self.state.state;
+                    self.setState(data);
+                });
+                $(this.getDOMNode()).layout({ 
+                    north__resizable: false,
+                    north__closable: false,
+                    north__slidable: false
+                });
+            },
+            getStudyState: function() {
+                return this.state.state[this.state.active];
+            },
+            getStudy: function() {
+                return this.state.studies[this.state.active];
+            },
+            setStudy: function(index) {
+                this.setState({active: index})
+            },
+            
+            createStudy: function() {
+                this.setState({active: null})
+            },
+            setDisplay: function(element) {
+                this.getStudyState().content = element;
+                this.setState(this.state);
+            },
+            render: function() {
+                var self = this;
+                return <div id="wrapper">
+                    <div className='ui-layout-north'>
+                        <div id="tabbar">
+                            {this.state.studies.map(function(v, i) {
+                                console.log(self.state.active);
+                                return <Tab key={i} content={v.name} action={eta_factory(self.setStudy, i)} active={self.state.active == i}/>
+                            })}
+                            <Tab content='+' action={self.createStudy} active={self.state.active === null}/>
+                        </div>
+                        <Header name={self.state.studies[self.state.active].name} description={self.state.studies[self.state.active].description} />
+                    </div>
+                    <Toolbar update={self.setDisplay} parent={self}/>
+                    <Display content={self.getStudyState().content}/>
+                    <Log data={self.state.log} />
+                </div>
+            }
+        });
+        
+        var conn = qiime.connect(prompt("Please enter the QIIME server address to connect to:", "http://localhost:8888"));
+        conn.then(function(data) {
+            React.render(<Body data={data} />, document.body);
+        });
+    </script>
+      
+    <script>hljs.initHighlightingOnLoad();</script>
+  </body>
 </html>

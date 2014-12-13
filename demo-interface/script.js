@@ -1,22 +1,24 @@
 (function(window, qiime, Promise, undefined){
     qiime.connect = function(host) {
         connection = (function(){
-            function xmlhttprequest(method, url, success, failure) {
+            function xmlhttprequest(method, url) {
+                var d = Promise.defer()
                 var xhr = new XMLHttpRequest();
                 xhr.open(method, url, true);
                 xhr.onload = function (e) {
                     if(xhr.readyState === 4) {
                         if (xhr.status === 200) {
-                            success(JSON.parse(xhr.responseText));
+                            d.resolve(JSON.parse(xhr.responseText));
                         } else {
-                            failure(new Error(e))
+                            d.reject(new Error(e))
                         }
                     }
                 };
                 xhr.onerror = function (e) {
-                    failure(new Error(e))
+                    d.reject(new Error(e))
                 };
                 xhr.send();
+                return d.promise
             }
 
             var c = {};
@@ -35,9 +37,7 @@
                         url += encodeURIComponent(parameters[name]);
                     }
                 }
-                var d = Promise.defer()
-                xmlhttprequest('GET', url, d.resolve, d.reject)
-                return d.promise;
+                return xmlhttprequest('GET', url, d.resolve, d.reject)
             }
 
             c.put = function() {
@@ -55,42 +55,130 @@
             return c;
         })()
 
+        function make_listen(resource) {
+
+        }
+
+        function reactive_property(resource, property, formatter) {
+            if(!formatter) formatter = function(g, s){ if(g) s=g; return s; };
+            if(!resource.api) resource.api = {};
+            if(!resource.notifiers) resource.notifiers = [];
+            if(!resource.listeners) resource.listeners = {};
+            if(!resource.api.listen) {
+                resource.api.listen = function(prop, callback) {
+                    resource.listeners[prop].append(callback);
+                }
+            }
+            var listeners = resource.listeners[property] = [];
+
+            var value = undefined;
+            resource.notifiers.push(function(response) {
+                if(JSON.stringify(response[property]) != JSON.stringify(value)) {
+                    for(var i=0; i<listeners.length; i++) {
+                        value = response[property]
+                        listeners[i](value)
+                    }
+                }
+            })
+            Object.defineProperty(resource.api, property, {
+                enumerable: true,
+                get: function() {
+
+                },
+                set: function(v) {
+                    args = {};
+                    args[property] = formatter(undefined, v);
+                    connection.put(resource.uri, args).then(function(){
+                        resource.update()
+                    })
+                }
+            })
+        }
+
+
+        function study(uri) {
+            function artifact(uri) {
+                var artifact = {};
+
+                return artifact;
+            }
+
+            function job(uri) {
+                function time(to, from) {
+                    if(from) {
+                        t = v.replace('-', '/').split('.')
+                        d = new Date(t[0])
+                        d.setMilliseconds(Math.round(t[1]/1000))
+                        return d;
+                    } else {
+
+                    }
+                }
+                var job = {};
+                job.uri = uri;
+                job.fetcher = function fetcher() {
+                    connection.get(job.uri)
+                    window.setTimeout(fetcher, 1000)
+                }
+                reactive_property(job, 'status');
+                reactive_property(job, 'submitted', time);
+                reactive_property(job, 'completed', time);
+                reactive_property(job, 'inputs');
+                reactive_property(job, 'outputs');
+                return job.api;
+            }
+
+            var study = {};
+
+            study.artifacts = function() {
+
+                return study;
+            }
+
+            study.add_artifact = function() {
+
+                return study;
+            }
+
+            study.remove_artifact = function() {
+
+                return study;
+            }
+
+            study.jobs = function() {
+
+                return study;
+            }
+
+            study.submit_job = function() {
+
+            }
+
+            return study;
+        }
+
+
+
+
         var api = {};
 
-        api.create_artifact = function(fp) {
-        }
-
-        api.delete_artifact = function(artifact) {
+        api.studies = function() {
 
         }
 
-        api.update_artifact = function(artifact) {
+        api.system = function() {
 
         }
 
-        api.artifact_info = function(artifact) {
+        api.method_info = function() {
 
         }
 
-        api.list_artifacts = function() {
-            return connection.get('/artifacts')
+        api.type_info = function() {
+
         }
 
-        api.list_methods = function(plugin) {
-            kwargs = {}
-            if(plugin) {
-                kwargs.plugin = plugin
-            }
-            return connection.get('/api/list_methods', kwargs)
-        }
-
-        api.list_plugins = function() {
-            return connection.get('/api/list_plugins')
-        }
-
-        api.method_info = function(method) {
-            return connection.get('/api/method_info/'+method)
-        }
+        api.listen = function(property, )
 
         return api;
     }
