@@ -30,6 +30,7 @@
             NOTIFY();
         }
         
+        
         function GET(path, args) {
             var url = hostname + path;
             promise = XMLHTTPREQUEST('get', url)
@@ -60,9 +61,33 @@
         }
 
         function Job(uri) {
-            var job = {}
-            
-            return Promise.Promise(function(r) { r(uri + ' :-)'); });
+            return GET(uri).then(function(response){
+                return Promise.Promise(function(resolve) {
+                    var job = {};
+                    job.completed = response.completed;
+                    job.workflow = response.workflow;
+                    job.status = response.status;
+                    job.outputs = response.outputs;
+                    job.submitted = response.submitted;
+                    job.id = response.resource;
+                    job.inputs = response.inputs;
+                    resolve(job);
+                })
+            }); 
+        }
+        
+        function Method(uri) {
+            return GET(uri).then(function(response){
+                return Promise.Promise(function(resolve) {
+                    var method = {}
+                    method.id = response.resource;
+                    method.name = response.name;
+                    method.help = response.help;
+                    method.inputs = response.inputs;
+                    method.outputs = response.outputs;
+                    resolve(method);
+                });
+            });
         }
 
         function Study(uri) {
@@ -132,11 +157,17 @@
                         listeners.push(function() { callback(connection); });
                     }
                     connection.log = log;
-                    Promise.all(studies.studies.map(function(value) {
-                        return Study(value);
-                    })).then(function(studies) {
-                        connection.studies = studies
-                        resolve(connection)
+                    Promise.all([
+                        Promise.all(studies.studies.map(function(value) {
+                            return Study(value);
+                        })), 
+                        Promise.all(methods.methods.map(function(value) {
+                            return Method(value);
+                        }))            
+                    ]).spread(function(studies, methods) {
+                        connection.studies = studies;
+                        connection.methods = methods;
+                        resolve(connection);
                     });
                 }); 
             });
