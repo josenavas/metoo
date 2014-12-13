@@ -3,10 +3,11 @@ import skbio.diversity.beta
 import numpy as np
 from scipy.stats import pearsonr, spearmanr
 
-from qiime.types.parameterized import ChooseOne, Range
+from qiime.types.parameterized import ChooseOne, List, Range
 from qiime.types.primitives import Boolean, Decimal, Integer, String
 from . import qiime
-from .types import DistanceMatrix, OrdinationResults, SampleMetadata
+from .types import (
+    DistanceMatrix, OrdinationResults, SampleMetadata, PairwiseMantelResults)
 
 @qiime.register_method("Principal Coordinates Analysis (PCoA)")
 def pcoa(dm: DistanceMatrix) -> OrdinationResults:
@@ -44,4 +45,19 @@ def mantel(x: DistanceMatrix, y: DistanceMatrix,
                                        Range(Integer, 0, None)):
     return skbio.stats.distance.mantel(
         x, y, method=method, permutations=permutations,
+        alternative=alternative, strict=strict)
+
+# TODO add `lookup` support
+@qiime.register_method("Pairwise Mantel test")
+def pwmantel(dms: List(DistanceMatrix), labels: List(String) = (),
+             method: ChooseOne(String, ['pearson', 'spearman']) = 'pearson',
+             permutations: Range(Integer, 0, None) = 999,
+             alternative: ChooseOne(String, ['two-sided', 'greater', 'less']) = 'two-sided',
+             strict: Boolean = True) -> PairwiseMantelResults:
+    if labels == ():
+        # scikit-bio expects None for default case
+        labels = None
+
+    return skbio.stats.distance.pwmantel(
+        dms, labels=labels, method=method, permutations=permutations,
         alternative=alternative, strict=strict)

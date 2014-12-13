@@ -64,3 +64,21 @@ class OrdinationResults(Artifact):
         blob = StringIO()
         data.write(blob)
         return blob.getvalue()
+
+@qiime.register_type
+class PairwiseMantelResults(Artifact):
+    """Results from performing pairwise Mantel tests on distance matrices."""
+    name = 'pairwise Mantel results'
+    data_type = pd.DataFrame
+
+    @classmethod
+    def load(cls, blob):
+        # TODO make sure this works with MultiIndex
+        return pd.read_csv(StringIO(blob.decode('utf-8')), sep='\t',
+                           index_col=0)
+
+    @classmethod
+    def save(cls, data):
+        blob = StringIO()
+        data.to_csv(blob, sep='\t')
+        return blob.getvalue()

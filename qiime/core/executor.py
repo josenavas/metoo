@@ -1,5 +1,5 @@
 from qiime.core.registry import plugin_registry
-from qiime.core.util import is_list, extract_artifact_id
+from qiime.core.util import extract_artifact_id, listify_duplicate_keys
 from qiime.types import Artifact, Parameterized, Primitive
 from qiime.types.parameterized import List, ChooseMany
 import qiime.db as db
@@ -49,17 +49,3 @@ def traverse_result_and_record(result, type_, order=0, parent=None):
         return parent
 
     return traverse_result_and_record(result, type_.subtype, order=order, parent=parent)
-
-
-def listify_duplicate_keys(job_inputs):
-    inputs = {}
-    for input_ in job_inputs:
-        key = input_.key
-        if key in inputs:
-            if is_list(inputs[key]):
-                inputs[key].append(input_.value)
-            else:
-                inputs[key] = [inputs[key], input_.value]
-        else:
-            inputs[key] = input_.value
-    return inputs

@@ -72,6 +72,7 @@ class Job(BaseModel):
     def uri(self):
         return '/studies/%d/jobs/%d' % (self.study.id, self.id)
 
+# TODO mirror JobOutput for handling arbitrarily nested inputs
 class JobInput(BaseModel):
     class Meta:
         indexes = [(('job', 'key', 'order'), True)]

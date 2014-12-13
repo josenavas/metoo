@@ -41,3 +41,6 @@ curl -w "\n" -X POST -F method=/system/plugins/qiime/methods/dm_from_env -F inpu
 curl -w "\n" -X POST -F method=/system/plugins/qiime/methods/mantel -F input_x=/studies/1/artifacts/1 -F input_y=/studies/1/artifacts/4 -F input_method=spearman -F input_strict=false http://localhost:8888/studies/1/jobs
 curl -w "\n" -X POST -F method=/system/plugins/qiime/methods/mantel -F input_x=/studies/1/artifacts/1 -F input_y=/studies/1/artifacts/5 -F input_method=spearman -F input_strict=false http://localhost:8888/studies/1/jobs
 curl -w "\n" -X POST -F method=/system/plugins/qiime/methods/mantel -F input_x=/studies/1/artifacts/1 -F input_y=/studies/1/artifacts/6 -F input_method=spearman -F input_strict=false http://localhost:8888/studies/1/jobs
+
+# Run Mantel tests for all pairs of distance matrices.
+curl -w "\n" -X POST -F method=/system/plugins/qiime/methods/pwmantel -F input_dms=/studies/1/artifacts/1 -F input_dms=/studies/1/artifacts/4 -F input_dms=/studies/1/artifacts/5 -F input_dms=/studies/1/artifacts/6 -F input_labels=UniFrac -F input_labels=pH -F input_labels="Soil moisture deficit" -F input_labels=Latitude -F input_method=spearman -F input_strict=false http://localhost:8888/studies/1/jobs

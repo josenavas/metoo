@@ -4,7 +4,7 @@ import qiime
 from qiime.core.executor import Executor
 from qiime.core.registry import plugin_registry
 from qiime.core.tornadotools import route, GET, POST, PUT, DELETE, yield_urls
-from qiime.core.util import extract_artifact_id
+from qiime.core.util import extract_artifact_id, listify_duplicate_keys
 from qiime.db import Artifact, ArtifactProxy, Type, Study, Workflow, WorkflowInput, Job, JobInput, OrderedResult
 from qiime.types import type_registry
 
@@ -291,7 +291,7 @@ def job_info(request, study_id, job_id, subscribe=None): # TODO handle SSE
         'completed': completed,
         'workflow': job.workflow.uri,
         # TODO track defaults as well. How do we do this for workflows?
-        'inputs': {i.key: i.value.decode('utf-8') for i in job.inputs},
+        'inputs': listify_duplicate_keys(job.inputs, decode_to_str=True),
         'outputs': outputs
     }
 
