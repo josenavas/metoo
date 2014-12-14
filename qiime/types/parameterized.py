@@ -10,6 +10,11 @@ def Range(type_, min_, max_, include_min=True, include_max=True):
     _assert_valid_type(type_, [p.Integer, p.Decimal])
     _assert_valid_args(type_, [min_, max_], allow_none=True)
 
+    if min_ is None:
+        include_min = False
+    if max_ is None:
+        include_max = False
+
     class Range(Parameterized):
         subtype = type_
         args = (min_, max_, include_min, include_max)
