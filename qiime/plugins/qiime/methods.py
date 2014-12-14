@@ -44,6 +44,7 @@ def mantel(x: DistanceMatrix, y: DistanceMatrix,
            strict: Boolean = True) -> (Range(Decimal, -1, 1),
                                        Range(Decimal, 0, 1),
                                        Range(Integer, 0, None)):
+    """Compute correlation between distance matrices using the Mantel test."""
     return skbio.stats.distance.mantel(
         x, y, method=method, permutations=permutations,
         alternative=alternative, strict=strict)
@@ -55,6 +56,7 @@ def pwmantel(dms: List(DistanceMatrix), labels: List(String) = (),
              permutations: Range(Integer, 0, None) = 999,
              alternative: ChooseOne(String, ['two-sided', 'greater', 'less']) = 'two-sided',
              strict: Boolean = True) -> PairwiseMantelResults:
+    """Run Mantel tests for every pair of distance matrices."""
     # scikit-bio expects None for default case
     labels = None if labels == () else labels
 
@@ -65,6 +67,7 @@ def pwmantel(dms: List(DistanceMatrix), labels: List(String) = (),
 @qiime.register_method("BIO-ENV")
 def bioenv(distance_matrix: DistanceMatrix, sample_metadata: SampleMetadata,
         columns: List(String) = ()) -> BioenvResults:
+    """Find subset of variables maximally correlated with distances."""
     # scikit-bio expects None for default case
     columns = None if columns == () else columns
 
