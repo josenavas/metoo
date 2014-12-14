@@ -12,20 +12,20 @@ def get_urls():
     return list(yield_urls())
 
 @route('/system', GET)
-def system_info(request):
+def system_info(request_handler):
     return {
         'version': qiime.__version__
     }
 
 @route('/system/plugins', GET)
 @route('/system/plugins/all', GET)
-def list_plugins(request):
+def list_plugins(request_handler):
     return {
         'plugins': list(plugin_registry.get_plugin_uris())
     }
 
 @route('/system/plugins/:plugin', GET)
-def plugin_info(request, plugin_name):
+def plugin_info(request_handler, plugin_name):
     plugin = plugin_registry.get_plugin(plugin_name)
 
     return {
@@ -36,15 +36,15 @@ def plugin_info(request, plugin_name):
     }
 
 @route('/system/plugins/all/methods', GET)
-def list_all_methods(request):
-    return list_methods(request, None)
+def list_all_methods(request_handler):
+    return list_methods(request_handler, None)
 
 @route('/system/plugins/:plugin/methods', GET)
-def list_methods(request, plugin_name):
+def list_methods(request_handler, plugin_name):
     return {'methods': [m.uri for m in plugin_registry.get_methods(plugin_name=plugin_name)]}
 
 @route('/system/plugins/:plugin/methods/:method', GET)
-def method_info(request, plugin_name, method_name):
+def method_info(request_handler, plugin_name, method_name):
     method = plugin_registry.get_plugin(plugin_name).get_method(method_name)
 
     return {
@@ -55,11 +55,11 @@ def method_info(request, plugin_name, method_name):
     }
 
 @route('/system/plugins/all/types', GET, params=['format'])
-def list_all_plugin_types(request, format=None):
-    return list_plugin_types(request, None, format=format)
+def list_all_plugin_types(request_handler, format=None):
+    return list_plugin_types(request_handler, None, format=format)
 
 @route('/system/plugins/:plugin/types', GET, params=['format'])
-def list_plugin_types(request, plugin_name, format=None):
+def list_plugin_types(request_handler, plugin_name, format=None):
     if format is None:
         format = 'list'
 
@@ -78,8 +78,8 @@ def list_plugin_types(request, plugin_name, format=None):
 @route('/system/plugins/:plugin/types/:type', GET)
 @route('/system/types/primitives/:type', GET)
 @route('/system/types/parameterized/:type', GET)
-def type_info(request, *_):
-    type_ = type_registry.get_type(request.path)
+def type_info(request_handler, *_):
+    type_ = type_registry.get_type(request_handler.request.path)
 
     return {
         'name': type_.name,
@@ -87,26 +87,26 @@ def type_info(request, *_):
     }
 
 @route('/system/types/primitives', GET)
-def list_primitive_types(request):
+def list_primitive_types(request_handler):
     return {
         'primitives': [t.uri for t in type_registry.get_primitive_types().values()]
     }
 
 @route('/system/types/parameterized', GET)
-def list_parameterized_types(request):
+def list_parameterized_types(request_handler):
     return {
         'parameterized': [t.uri for t in
                   type_registry.get_parameterized_types().values()]
     }
 
 @route('/studies', GET)
-def list_studies(request):
+def list_studies(request_handler):
     return {
         'studies': [study.uri for study in Study.select()]
     }
 
 @route('/studies', POST, params=['name', 'description'])
-def create_study(request, name, description):
+def create_study(request_handler, name, description):
     study = Study(name=name, description=description)
     study.save()
     return {
@@ -114,7 +114,7 @@ def create_study(request, name, description):
     }
 
 @route('/studies/:study', GET)
-def study_info(request, study_id):
+def study_info(request_handler, study_id):
     study = Study.get(Study.id == study_id)
 
     return {
@@ -124,7 +124,7 @@ def study_info(request, study_id):
     }
 
 @route('/studies/:study', PUT, params=['name', 'description'])
-def study_info(request, study_id, name=None, description=None):
+def study_info(request_handler, study_id, name=None, description=None):
     study = Study.get(Study.id == study_id)
     if name is not None:
         study.name = name
@@ -135,15 +135,15 @@ def study_info(request, study_id, name=None, description=None):
     return {}
 
 @route('/studies/:study', DELETE)
-def study_info(request, study_id):
+def study_info(request_handler, study_id):
     study = Study.get(Study.id == study_id)
     study.delete_instance() # TODO think about cascading deletes
 
     return {}
 
 @route('/studies/:study/artifacts', POST, params=['name', 'artifact_type'])
-def create_artifact(request, study_id, name, artifact_type):
-    data = _get_file_data(request)
+def create_artifact(request_handler, study_id, name, artifact_type):
+    data = _get_file_data(request_handler.request)
     if data is None:
         raise ValueError("Cannot create artifact: missing uploaded file.")
 
@@ -159,7 +159,7 @@ def create_artifact(request, study_id, name, artifact_type):
     return {}
 
 @route('/studies/:study/artifacts', GET)
-def list_artifacts(request, study_id):
+def list_artifacts(request_handler, study_id):
     artifacts = Study.get(id=study_id).artifacts
 
     return {
@@ -167,7 +167,7 @@ def list_artifacts(request, study_id):
     }
 
 @route('/studies/:study/artifacts', PUT, params=['artifact'])
-def link_artifact(request, study_id, artifact):
+def link_artifact(request_handler, study_id, artifact):
     artifact_id = extract_artifact_id(artifact)
     parent_artifact = ArtifactProxy.get(id=artifact_id)
     linked_artifacts = ArtifactProxy.select().where(
@@ -187,21 +187,30 @@ def link_artifact(request, study_id, artifact):
     }
 
 @route('/studies/:study/artifacts/:artifact', GET, params=['export'])
-def artifact_info(request, study_id, artifact_id, export=None):
-    if export is not None:
-        raise NotImplementedError()
-
+def artifact_info(request_handler, study_id, artifact_id, export=None):
     proxy = ArtifactProxy.select().where(
         ArtifactProxy.id == artifact_id,
         ArtifactProxy.study == study_id).get()
 
-    return {
-        'name': proxy.name,
-        'type': proxy.artifact.type.uri
-    }
+    # TODO chunked downloading, figure out recommended file extension, support
+    # multiple export formats
+    if export:
+        # don't return anything because we're handling the writing of the
+        # request here
+        filename = '"%s.txt"' % proxy.name
+        data = proxy.artifact.data
+        request_handler.set_header('Content-Type', 'application/octet-stream')
+        request_handler.set_header('Content-Disposition',
+                                   'attachment; filename=%s' % filename)
+        request_handler.write(data)
+    else:
+        return {
+            'name': proxy.name,
+            'type': proxy.artifact.type.uri
+        }
 
 @route('/studies/:study/artifacts/:artifact', PUT, params=['name'])
-def update_artifact(request, study_id, artifact_id, name=None):
+def update_artifact(request_handler, study_id, artifact_id, name=None):
     proxy = ArtifactProxy.get(id=artifact_id)
     if proxy.study.id == int(study_id): # TODO fix int hack!
         if name is not None:
@@ -214,7 +223,7 @@ def update_artifact(request, study_id, artifact_id, name=None):
     return {}
 
 @route('/studies/:study/artifacts/:artifact', DELETE)
-def delete_artifact(request, study_id, artifact_id):
+def delete_artifact(request_handler, study_id, artifact_id):
     proxy = ArtifactProxy.get(id=artifact_id)
     if proxy.study.id == int(study_id): # TODO fix int hack!
         proxy.delete_instance()
@@ -224,7 +233,7 @@ def delete_artifact(request, study_id, artifact_id):
     return {}
 
 @route('/studies/:study/jobs', GET, params=['status'])
-def list_jobs(request, study_id, status=None):
+def list_jobs(request_handler, study_id, status=None):
     jobs = Study.get(id=study_id).jobs
 
     if status is not None:
@@ -235,7 +244,7 @@ def list_jobs(request, study_id, status=None):
     }
 
 @route('/studies/:study/jobs', POST, params=['workflow', 'method'])
-def create_job(request, study_id, workflow=None, method=None):
+def create_job(request_handler, study_id, workflow=None, method=None):
     if workflow is None and method is None:
         raise Exception()
     if method is not None and workflow is not None:
@@ -256,6 +265,7 @@ def create_job(request, study_id, workflow=None, method=None):
         method = plugin_registry.get_plugin(method).get_method(method)
 
         # TODO fix this paypal hack
+        request = request_handler.request
         for param in request.arguments:
             # :tears:
             if param.startswith('input_'):
@@ -274,7 +284,7 @@ def create_job(request, study_id, workflow=None, method=None):
         }
 
 @route('/studies/:study/jobs/:job', GET, params=['subscribe'])
-def job_info(request, study_id, job_id, subscribe=None): # TODO handle SSE
+def job_info(request_handler, study_id, job_id, subscribe=None): # TODO handle SSE
     if subscribe is not None:
         raise NotImplementedError()
 
@@ -297,7 +307,7 @@ def job_info(request, study_id, job_id, subscribe=None): # TODO handle SSE
 
 # TODO handle updating downstream parts of the workflow
 @route('/studies/:study/jobs/:job', PUT, params=['status'])
-def update_job(request, study_id, job_id, status=None):
+def update_job(request_handler, study_id, job_id, status=None):
     job = Job.get(id=job_id)
 
     # TODO do something smarter here
@@ -309,7 +319,7 @@ def update_job(request, study_id, job_id, status=None):
     return {}
 
 @route('/studies/:study/jobs/:job', DELETE)
-def terminate_job(request, study_id, job_id):
+def terminate_job(request_handler, study_id, job_id):
     job = Job.get(id=job_id)
     job.status = 'terminated'
     job.save()
@@ -317,7 +327,7 @@ def terminate_job(request, study_id, job_id):
     return {}
 
 @route('/studies/:study/workflows', GET)
-def list_workflows(request, study_id):
+def list_workflows(request_handler, study_id):
     workflows = Study.get(id=study_id).workflows
 
     return {
@@ -326,7 +336,7 @@ def list_workflows(request, study_id):
 
 @route('/studies/:study/workflows', POST,
        params=['name', 'description', 'template'])
-def create_workflow(request, study_id, name, description, template):
+def create_workflow(request_handler, study_id, name, description, template):
     workflow = Workflow(name=name, description=description, template=template,
                         study=study_id)
     workflow.save()
@@ -336,7 +346,7 @@ def create_workflow(request, study_id, name, description, template):
     }
 
 @route('/studies/:study/workflows/:workflow', GET)
-def workflow_info(request, study_id, workflow_id):
+def workflow_info(request_handler, study_id, workflow_id):
     workflow = Workflow.get(id=workflow_id)
 
     return {
@@ -347,7 +357,7 @@ def workflow_info(request, study_id, workflow_id):
 
 @route('/studies/:study/workflows/:workflow', PUT,
        params=['name', 'description', 'template'])
-def update_workflow(request, study_id, workflow_id, name=None,
+def update_workflow(request_handler, study_id, workflow_id, name=None,
                     description=None, template=None):
     workflow = Workflow.get(id=workflow_id)
 
@@ -365,7 +375,7 @@ def update_workflow(request, study_id, workflow_id, name=None,
     }
 
 @route('/studies/:study/workflows/:workflow', DELETE)
-def delete_workflow(request, study_id, workflow_id):
+def delete_workflow(request_handler, study_id, workflow_id):
     workflow = Workflow.get(id=workflow_id)
 
     if workflow.study.id == int(study_id): # TODO fix int hack!
