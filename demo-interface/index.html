@@ -171,9 +171,144 @@
             }
         });
         
-        var Method = React.createClass({
+         var ArtifactInput = React.createClass({
             render: function() {
-                return <div>{this.props.data.id}</div>
+                var self = this;
+                return null;
+            }
+        });
+        
+         var IntegerInput = React.createClass({
+            render: function() {
+                var self = this;
+                return null;
+            }
+        });
+        
+         var StringInput = React.createClass({
+            render: function() {
+                var self = this;
+                return null;
+            }
+        });
+        
+         var DecimalInput = React.createClass({
+            render: function() {
+                var self = this;
+                return null;
+            }
+        });
+        
+         var PrimitiveInput = React.createClass({
+            render: function() {
+                var self = this;
+                return null;
+            }
+        });
+        
+         var ListInput = React.createClass({
+            render: function() {
+                var self = this;
+                return null;
+            }
+        });
+        
+        var ChooseOneInput = React.createClass({
+            render: function() {
+                var self = this;
+                return null;
+            }
+        });
+        
+        var RangedInput = React.createClass({
+            render: function() {
+                var self = this;
+                return null;
+            }
+        });
+        
+        var ParameterizedInput = React.createClass({
+            render: function() {
+                var self = this;
+                return null;
+            }
+        });
+        
+        var MethodInput = React.createClass({
+            render: function() {
+                var self = this;
+                return <div>{self.props.name}: {self.props.data.uri}</div>;
+            }
+        });
+        
+        var MethodInputs = React.createClass({
+            getInitialState: function() {
+                return {};
+            },
+            render: function() {
+                var self = this;
+                var inputs = self.props.data;
+                return <div>
+                    {Object.keys(inputs).map(function(key) {
+                       return <MethodInput name={key} data={inputs[key]} update={self.setState}/>;
+                    })}
+                </div>
+            }
+        });
+        
+        var MethodOutput = React.createClass({
+            getName: function(uri) {
+               return uri.substr(uri.lastIndexOf('/') + 1)
+            },
+            render: function() {
+                var self = this;
+                var data = self.props.data;
+                var result = "";
+                if(data.content == "parameterized") {
+                    result = self.getName(data.uri) + "(" + self.getName(data.subtype.uri)
+                    data.args.forEach(function(v) { result += ", " + v; });
+                    result += ")";
+                    
+                } else {
+                    result = self.getName(data.uri);
+                }
+                
+                return <li>{result}</li>
+            }
+        });
+        
+         var MethodOutputs = React.createClass({
+            render: function() {
+                var self = this;
+                return <ul>
+                    {self.props.data.map(function(m) {
+                        return <MethodOutput data={m}/>
+                    })}
+                </ul>
+            }
+        });
+        
+        
+        var Method = React.createClass({
+            getInitialState: function() {
+                return {inputs: {}};
+            },
+            setInputs: function(inputs) {
+                this.setState({inputs: inputs});
+            },
+            submit: function() {
+                self.props.action(this.state.inputs)
+            },
+            render: function() {
+                return <div>
+                    <h1>{this.props.data.name}</h1>
+                    <p>{this.props.data.help}</p>
+                    <h3>Inputs:</h3>
+                    <MethodInputs data={this.props.data.inputs} notify={self.setInputs}/>
+                    <h3>Will Produce:</h3>
+                    <MethodOutputs data={this.props.data.outputs} />
+                    <button onClick={this.props.action}>Submit Job</button>
+                </div>
             }
         });
         
@@ -182,7 +317,7 @@
                 var self = this;
                 return <ul>
                     {self.props.methods.map(function(m) {
-                        return <li><a href="#" onClick={eta_factory(self.props.update, <Method data={m} />)}>{m.name}</a></li>
+                        return <li><a href="#" onClick={eta_factory(self.props.update, <Method data={m} action={self.props.action}/>)}>{m.name}</a></li>
                     })}
                 </ul>;
             }
@@ -190,7 +325,12 @@
         
         var Artifact = React.createClass({
             render: function() {
-                return <div>{this.props.data.id}</div>
+                return <div>
+                    <h1>{this.props.data.name}</h1>
+                    <p>{this.props.data.id}</p>
+                    <p>{this.props.data.type}</p>
+                    <button onClick={this.props.data.download}>Download Artifact</button>
+                </div>
             }
         });
         
@@ -207,16 +347,27 @@
         
          var Job = React.createClass({
             render: function() {
-                return <div>{this.props.data.id}</div>
+                return <div>
+                <h1>{this.props.data.submitted}</h1>
+                <p><b>Completed on:</b> {this.props.data.completed} </p>
+                <p><b>Method used:</b> {this.props.data.method} </p>
+                <h3>Inputs:</h3>
+                <pre><code className="json">{JSON.stringify(this.props.data.inputs, undefined, 2)}</code></pre>
+                <h3>Outputs:</h3>
+                <pre><code className="json">{JSON.stringify(this.props.data.outputs, undefined, 2)}</code></pre>
+                </div>
             }
         });
         
         var Jobs = React.createClass({
+            getName: function(uri) {
+               return uri.substr(uri.lastIndexOf('/') + 1)
+            },
             render: function() {
                 var self = this;
                 return <ul>
                     {self.props.jobs.map(function(j) {
-                        return <li><a href="#" onClick={eta_factory(self.props.update, <Job data={j} />)}>{j.submitted}</a></li>
+                        return <li><a href="#" onClick={eta_factory(self.props.update, <Job data={j} />)}>{self.getName(j.method)+ "; " + j.submitted}</a></li>
                     })}
                 </ul>
             }
@@ -233,16 +384,18 @@
                 return this.props.parent.state.methods;
             },
             getArtifacts: function() {
-                console.log(this.props.parent);
                 return this.props.parent.getStudy().artifacts;
             },
             getJobs: function() {
                 return this.props.parent.getStudy().jobs;
             },
+            submitJob: function(args) {
+                this.props.update(<div>submit</div>);
+            },
             render: function() {
                 var self = this;
                 var views = {
-                    0: <Methods update={self.props.update} methods={self.getMethods()}/>,
+                    0: <Methods update={self.props.update} methods={self.getMethods()} action={self.submitJob}/>,
                     1: <Artifacts update={self.props.update} artifacts={self.getArtifacts()}/>,
                     2: <Jobs update={self.props.update} jobs={self.getJobs()}/>
                 };
@@ -307,32 +460,6 @@
             }
         });
         
-        var Study = React.createClass({
-            getInitialState: function() {
-                return {
-                    log: this.props.get('log'),
-                    tbview: this.props.get('tbview')
-                } //This is bad.
-            },
-            updateLog: function(index) {
-                this.props.get('log')[index] = !this.props.get('log')[index];
-                this.setState({log: this.props.get('log')}); //So is this.
-            },
-            changeToolbarView: function(id) {
-                this.props.set('tbview', id)
-                this.setState({tbview: id});
-            },
-            componentDidMount: function() {
-                $(this.getDOMNode()).layout({ applyDefaultStyles: true });
-            },
-            render: function() {
-                var self = this;
-                return <div className='ui-layout-center'>
-                    
-                </div>;
-            }
-        });
-        
         var NewStudy = React.createClass({
             render: function() {
                 return <div className='studyWrapper'><h1>Create a new study</h1></div>;
@@ -342,7 +469,6 @@
         var Body = React.createClass({
             
             getInitialState: function() {
-                console.log('uh oh');
                 var data = this.props.data;
                 data.active = null;
                 if(data.studies.length > 0)
@@ -361,7 +487,9 @@
                 $(this.getDOMNode()).layout({ 
                     north__resizable: false,
                     north__closable: false,
-                    north__slidable: false
+                    north__slidable: false,
+                    west__size: 400,
+                    south__initClosed: true,
                 });
             },
             getStudyState: function() {
@@ -387,7 +515,6 @@
                     <div className='ui-layout-north'>
                         <div id="tabbar">
                             {this.state.studies.map(function(v, i) {
-                                console.log(self.state.active);
                                 return <Tab key={i} content={v.name} action={eta_factory(self.setStudy, i)} active={self.state.active == i}/>
                             })}
                             <Tab content='+' action={self.createStudy} active={self.state.active === null}/>

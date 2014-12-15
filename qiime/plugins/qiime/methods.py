@@ -66,7 +66,7 @@ def pwmantel(dms: List(DistanceMatrix), labels: List(String) = (),
 
 @qiime.register_method("BIO-ENV")
 def bioenv(distance_matrix: DistanceMatrix, sample_metadata: SampleMetadata,
-        columns: List(String) = ()) -> BioenvResults:
+           columns: List(String) = ()) -> BioenvResults:
     """Find subset of variables maximally correlated with distances."""
     # scikit-bio expects None for default case
     columns = None if columns == () else columns
