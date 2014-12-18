@@ -1,0 +1,15 @@
+#!/usr/bin/env python3
+
+import click
+
+@click.group()
+def qcli():
+    pass
+
+@qcli.command()
+def start():
+    import qiime.service
+    qiime.service.init()
+
+if __name__ == '__main__':
+    qcli()
