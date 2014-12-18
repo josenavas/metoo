@@ -6,6 +6,7 @@ import skbio
 from qiime.types import Artifact
 from . import qiime
 
+# TODO make this consistent with method registration
 @qiime.register_type
 class DistanceMatrix(Artifact):
     """Symmetric, hollow 2-D matrix of distances."""
@@ -64,6 +65,9 @@ class OrdinationResults(Artifact):
         blob = StringIO()
         data.write(blob)
         return blob.getvalue()
+
+# TODO add intermediate base class for table-like stats results (e.g.,
+# StatsResults)
 
 @qiime.register_type
 class PairwiseMantelResults(Artifact):

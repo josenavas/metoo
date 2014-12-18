@@ -14,7 +14,7 @@ def primitive_factory(class_name, primitive):
     return _
 
 Integer = primitive_factory('Integer', int)
-Decimal = primitive_factory('Decimal', float)
+Decimal = primitive_factory('Decimal', float) # TODO should this be Real
 Boolean = primitive_factory(
     'Boolean',
     lambda e: True if e == b'true' else False # TODO handle this better
@@ -23,3 +23,5 @@ String = primitive_factory(
     'String',
     lambda e: e.decode('utf-8') if isinstance(e, bytes) else str(e)
 )
+
+# TODO add Date type

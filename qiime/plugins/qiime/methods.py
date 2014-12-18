@@ -43,7 +43,7 @@ def mantel(x: DistanceMatrix, y: DistanceMatrix,
            alternative: ChooseOne(String, ['two-sided', 'greater', 'less']) = 'two-sided',
            strict: Boolean = True) -> (Range(Decimal, -1, 1),
                                        Range(Decimal, 0, 1),
-                                       Range(Integer, 0, None)):
+                                       Range(Integer, 0, None)): # TODO return named tuples
     """Compute correlation between distance matrices using the Mantel test."""
     return skbio.stats.distance.mantel(
         x, y, method=method, permutations=permutations,
