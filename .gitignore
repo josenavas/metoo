@@ -54,3 +54,6 @@ docs/_build/
 
 # vi
 .*.swp
+
+# ignore the qiime2.db
+*.db
