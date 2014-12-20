@@ -1,3 +1,5 @@
+from moi.job import submit
+
 from qiime.core.registry import plugin_registry
 from qiime.core.util import extract_artifact_id, listify_duplicate_keys
 from qiime.types import Artifact, Parameterized, Primitive
