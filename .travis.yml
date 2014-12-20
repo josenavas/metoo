@@ -2,14 +2,13 @@
 # Check on http://lint.travis-ci.org/ after modifying it!
 language: python
 python:
-  - "2.7"
   - "3.3"
   - "3.4"
 install:
   - pip install nose pep8 flake8 coveralls
 script:
   - nosetests --with-coverage
-  - pep8 qiime
-  - flake8 qiime
+  - pep8 qiime_plugin framework
+  - flake8 qiime_plugin framework
 after_success:
   - coveralls
