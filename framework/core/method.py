@@ -1,5 +1,5 @@
 import inspect
-from qiime.types import BaseType
+from framework.types import BaseType
 
 class Method(object):
     def __init__(self, function, uri, name, docstring, annotations):

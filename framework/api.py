@@ -1,12 +1,12 @@
 import inspect
 
-import qiime
-from qiime.core.executor import Executor
-from qiime.core.registry import plugin_registry
-from qiime.core.tornadotools import route, GET, POST, PUT, DELETE, yield_urls
-from qiime.core.util import extract_artifact_id, listify_duplicate_keys
-from qiime.db import Artifact, ArtifactProxy, Type, Study, Workflow, WorkflowInput, Job, JobInput, OrderedResult
-from qiime.types import type_registry
+import framework
+from framework.core.executor import Executor
+from framework.core.registry import plugin_registry
+from framework.core.tornadotools import route, GET, POST, PUT, DELETE, yield_urls
+from framework.core.util import extract_artifact_id, listify_duplicate_keys
+from framework.db import Artifact, ArtifactProxy, Type, Study, Workflow, WorkflowInput, Job, JobInput, OrderedResult
+from framework.types import type_registry
 
 def get_urls():
     return list(yield_urls())
@@ -14,7 +14,7 @@ def get_urls():
 @route('/system', GET)
 def system_info(request_handler):
     return {
-        'version': qiime.__version__
+        'version': framework.__version__
     }
 
 @route('/system/plugins', GET)

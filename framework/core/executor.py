@@ -1,8 +1,8 @@
-from qiime.core.registry import plugin_registry
-from qiime.core.util import extract_artifact_id, listify_duplicate_keys
-from qiime.types import Artifact, Parameterized, Primitive
-from qiime.types.parameterized import List, ChooseMany
-import qiime.db as db
+from framework.core.registry import plugin_registry
+from framework.core.util import extract_artifact_id, listify_duplicate_keys
+from framework.types import Artifact, Parameterized, Primitive
+from framework.types.parameterized import List, ChooseMany
+import framework.db as db
 
 import datetime
 

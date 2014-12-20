@@ -118,7 +118,7 @@ def initialize_db():
 
 def _populate_type_table():
     # circular imports FTW
-    from qiime.types import type_registry
+    from framework.types import type_registry
 
     for uri in type_registry.get_types():
         if Type.select().where(Type.uri == uri).count() == 0:

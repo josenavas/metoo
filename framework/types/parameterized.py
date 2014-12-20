@@ -1,9 +1,9 @@
 import operator
 
-from qiime.types import type_registry, Parameterized
-from qiime.core.util import is_list
+from framework.types import type_registry, Parameterized
+from framework.core.util import is_list
 
-import qiime.types.primitives as p
+import framework.types.primitives as p
 
 @type_registry.parameterized
 def Range(type_, min_, max_, include_min=True, include_max=True):

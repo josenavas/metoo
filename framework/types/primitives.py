@@ -1,4 +1,4 @@
-from qiime.types import type_registry, Primitive
+from framework.types import type_registry, Primitive
 
 def primitive_factory(class_name, primitive):
     class _(Primitive):

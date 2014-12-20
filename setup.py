@@ -24,7 +24,7 @@ description = ('Quantitative insights into microbial ecology')
 with open('README.md') as f:
     long_description = f.read()
 
-setup(name='qiime',
+setup(name='metoo',
       version=__version__,
       license='BSD',
       description=description,

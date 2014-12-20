@@ -2,8 +2,8 @@ import types
 from abc import ABCMeta, abstractmethod
 from importlib import import_module
 
-import qiime.db as db
-from qiime.core.util import extract_artifact_id, is_uri, get_feature_from_uri
+import framework.db as db
+from framework.core.util import extract_artifact_id, is_uri, get_feature_from_uri
 
 class BaseType(object):
     # These are set at registration.

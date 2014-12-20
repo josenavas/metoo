@@ -1,5 +1,5 @@
-from qiime.core.util import is_uri, get_feature_from_uri
-from qiime.types import type_registry, Artifact
+from framework.core.util import is_uri, get_feature_from_uri
+from framework.types import type_registry, Artifact
 from .method import Method
 
 class Plugin(object):

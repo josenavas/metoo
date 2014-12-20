@@ -3,7 +3,7 @@ from io import StringIO
 import pandas as pd
 import skbio
 
-from qiime.types import Artifact
+from framework.types import Artifact
 from . import qiime
 
 # TODO make this consistent with method registration

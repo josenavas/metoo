@@ -8,8 +8,8 @@ def qcli():
 
 @qcli.command()
 def start():
-    import qiime.service
-    qiime.service.init()
+    import framework.service
+    framework.service.init()
 
 if __name__ == '__main__':
     qcli()

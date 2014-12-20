@@ -3,8 +3,8 @@ import skbio.diversity.beta
 import numpy as np
 from scipy.stats import pearsonr, spearmanr
 
-from qiime.types.parameterized import ChooseOne, List, Range
-from qiime.types.primitives import Boolean, Decimal, Integer, String
+from framework.types.parameterized import ChooseOne, List, Range
+from framework.types.primitives import Boolean, Decimal, Integer, String
 from . import qiime
 from .types import (
     DistanceMatrix, OrdinationResults, SampleMetadata, PairwiseMantelResults,
